@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Baden-Württemberg",
+    "abbr": "BW",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 8,
+    "municipal_tax_range": { "min": 200, "max": 450 },
+    "notes": "Strong tax base; cosmopolitan economy."
+  },
+  {
+    "name": "Bayern",
+    "abbr": "BY",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 8,
+    "municipal_tax_range": { "min": 200, "max": 480 },
+    "notes": "Largest Bundesland by area and population; diverse industry."
+  },
+  {
+    "name": "Berlin",
+    "abbr": "BE",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 210, "max": 410 },
+    "notes": "Capital city; service-oriented economy."
+  },
+  {
+    "name": "Brandenburg",
+    "abbr": "BB",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 190, "max": 380 },
+    "notes": "Surrounding Berlin; growing tech sector."
+  },
+  {
+    "name": "Bremen",
+    "abbr": "HB",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 210, "max": 420 },
+    "notes": "City-state; major port and maritime industry."
+  },
+  {
+    "name": "Hamburg",
+    "abbr": "HH",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 200, "max": 450 },
+    "notes": "City-state; international trade and finance hub."
+  },
+  {
+    "name": "Hessen",
+    "abbr": "HE",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 200, "max": 430 },
+    "notes": "Frankfurt financial center."
+  },
+  {
+    "name": "Mecklenburg-Vorpommern",
+    "abbr": "MV",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 170, "max": 380 },
+    "notes": "Coastal state; tourism and agriculture."
+  },
+  {
+    "name": "Niedersachsen",
+    "abbr": "NI",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 190, "max": 420 },
+    "notes": "Large state; automotive and aerospace industries."
+  },
+  {
+    "name": "Nordrhein-Westfalen",
+    "abbr": "NW",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 200, "max": 480 },
+    "notes": "Most populous state; industrial heartland."
+  },
+  {
+    "name": "Rheinland-Pfalz",
+    "abbr": "RP",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 200, "max": 420 },
+    "notes": "Wine region; mixed economy."
+  },
+  {
+    "name": "Saarland",
+    "abbr": "SL",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 220, "max": 430 },
+    "notes": "Smallest state by population; steel legacy."
+  },
+  {
+    "name": "Sachsen",
+    "abbr": "SN",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 180, "max": 380 },
+    "notes": "Growing tech and manufacturing sectors."
+  },
+  {
+    "name": "Sachsen-Anhalt",
+    "abbr": "ST",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 170, "max": 360 },
+    "notes": "Agricultural and chemical industries."
+  },
+  {
+    "name": "Schleswig-Holstein",
+    "abbr": "SH",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 180, "max": 400 },
+    "notes": "Northern coastal state; maritime focus."
+  },
+  {
+    "name": "Thüringen",
+    "abbr": "TH",
+    "vat_standard": 19,
+    "vat_reduced": 7,
+    "church_tax_rate": 9,
+    "municipal_tax_range": { "min": 160, "max": 360 },
+    "notes": "Central state; diverse manufacturing."
+  }
+]

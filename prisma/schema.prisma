@@ -1,0 +1,155 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+ 
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  name               String?
+  // optional because OAuth users won’t supply one; we keep it around for
+  // potential credential logins later.
+  password           String?   // hashed
+  emailVerified      DateTime?
+  image              String?
+  language           String    @default("de") // de or en
+  currency           String    @default("EUR")
+  taxClass           Int       @default(1)
+  state              String    @default("NW")
+  
+  // Transactions
+  transactions       Transaction[]
+
+  // NextAuth relations
+  accounts           Account[]
+  sessions           Session[]
+
+  // Budgets
+  budgets            Budget[]
+  
+  // Goals
+  savingsGoals       SavingsGoal[]
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Transaction {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type               String    // "income" or "expense"
+  amount             Float
+  category           String    // Category name from CATEGORIES
+  description        String
+  date               DateTime
+  tag                String?   // "recurring", "annual", etc.
+  
+  // Tax / State Info
+  bundesland         String?   // State name (e.g., "Bayern", "Berlin")
+  vat                Float?    // Applied VAT rate (19, 7, etc.)
+  churchTax          Float?    // Church tax rate if applicable
+  applyChurchTax     Boolean   @default(false) // User opt-in for church tax
+  municipalTaxRange  String?   // JSON string of min/max municipal tax for reference
+  employmentStatus   String?   // "worker", "student", "apprentice" - affects tax treatment
+  taxClass           Int?      // German tax class (1-6) for salary calculations
+  hasKinder          Boolean   @default(false) // Has dependent children (affects tax)
+  
+  // Salary allocation (for Gehalt splits)
+  salaryAllocation   String?   // JSON string like {"Mieten": 500, "Essen": 300, ...}
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([date])
+}
+
+model Budget {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  category           String    // Category name
+  maxAmount          Float     // Monthly limit
+  alertThreshold     Float?    // Alert when spent % of budget (0-100)
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@unique([userId, category])
+  @@index([userId])
+}
+
+model SavingsGoal {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name               String    // "Urlaub 2026", "Auto", etc.
+  targetAmount       Float
+  currentAmount      Float     @default(0)
+  dueDate            DateTime?
+  priority           Int       @default(0) // 0=low, 1=medium, 2=high
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+}
+
+model MoneyTip {
+  id                 String    @id @default(cuid())
+  category           String    // "savings", "tax", "investing", etc.
+  language           String    @default("de")
+  title              String
+  description        String
+  impact             String?   // "Sparen pro Monat: €X", etc.
+  
+  createdAt          DateTime  @default(now())
+}
+
+// NextAuth models required by Prisma adapter
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @map("refresh_token")
+  access_token       String?  @map("access_token")
+  expires_at         Int?     @map("expires_at")
+  token_type         String?  @map("token_type")
+  scope              String?
+  id_token           String?  @map("id_token")
+  session_state      String?
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

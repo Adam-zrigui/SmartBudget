@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  next-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: development
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: secret123456789012345678901234567890
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      COHERE_API_KEY: ${COHERE_API_KEY}
+      # Point to Neon (or local postgres if you uncomment below)
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: neondb_user
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: budgetdb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - app-network
+    # Comment this out if using Neon instead of local Postgres
+    # profiles:
+    #   - local-db
+
+volumes:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge

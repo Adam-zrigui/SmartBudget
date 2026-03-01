@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: smartbudget-service
+  namespace: default
+  labels:
+    app: smartbudget
+spec:
+  selector:
+    app: smartbudget
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  type: LoadBalancer  # Use ClusterIP if behind an ingress, LoadBalancer for direct access
