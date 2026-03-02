@@ -1,6 +1,5 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/lib/store';
@@ -16,11 +15,10 @@ function SignInContent() {
 
   const handleGoogle = async () => {
     setIsLoading(true);
-    // let next-auth handle the redirect directly; avoiding `redirect: false`
-    // prevents a POST with urlencoded body that the server tries to
-    // JSON.parse and crashes (see Vercel logs about `redirect=f...`).
-    await signIn('google', { callbackUrl });
-    // execution will usually not reach here because of navigation
+    // redirect directly via GET to avoid POST body parsing errors on Vercel
+    const url = new URL('/api/auth/signin/google', window.location.origin);
+    url.searchParams.set('callbackUrl', callbackUrl);
+    window.location.href = url.toString();
   };
 
   const language = useLanguageStore((s) => s.language);
