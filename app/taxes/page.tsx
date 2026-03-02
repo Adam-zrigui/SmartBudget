@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import PageAnimationWrapper from '@/components/PageAnimationWrapper';
 
 type StateTax = {
   name: string;
@@ -68,6 +69,7 @@ export default function TaxesPage() {
     );
 
   return (
+    <PageAnimationWrapper>
     <div className="min-h-screen bg-base-100 py-12">
       <div className="ui-container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
@@ -180,5 +182,6 @@ export default function TaxesPage() {
         </div>
       </div>
     </div>
+    </PageAnimationWrapper>
   );
 }

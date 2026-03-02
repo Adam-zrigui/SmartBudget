@@ -13,7 +13,7 @@ services:
       NEXTAUTH_SECRET: secret123456789012345678901234567890
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      COHERE_API_KEY: ${COHERE_API_KEY}
+      HF_API_KEY: ${HF_API_KEY}
       # Point to Neon (or local postgres if you uncomment below)
       DATABASE_URL: ${DATABASE_URL}
     depends_on:

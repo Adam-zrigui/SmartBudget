@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { CATEGORIES, IC, fmt, DE_TAX_CLASSES } from '@/lib/utils'
 import Header from '@/components/Header'
+import PageAnimationWrapper from '@/components/PageAnimationWrapper';
 import Sidebar from '@/components/Sidebar'
 import { useLanguageStore } from '@/lib/store'
 import { useTranslations } from '@/lib/translations'

@@ -1,0 +1,12 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: smartbudget-pdb
+  namespace: smartbudget
+  labels:
+    app: smartbudget
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: smartbudget

@@ -24,9 +24,28 @@ export async function GET(req: NextRequest) {
       where.date = { gte: startDate, lte: endDate };
     }
 
-    const transactions = await prisma.transaction.findMany({ where, orderBy: { date: "desc" } });
+    const transactions = await prisma.transaction.findMany({
+      where,
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        type: true,
+        date: true,
+        category: true,
+        tag: true,
+        vat: true,
+        churchTax: true,
+        employmentStatus: true,
+      },
+      orderBy: { date: "desc" },
+    });
 
-    return NextResponse.json(transactions);
+    return NextResponse.json(transactions, {
+      headers: {
+        'Cache-Control': 'private, max-age=60', // 1 minute cache
+      },
+    });
   } catch (err) {
     console.error("GET /api/transactions error:", err);
     return NextResponse.json(

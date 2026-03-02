@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 import { Transaction } from '@/lib/store';
+import { usePrefetch } from '@/hooks/use-prefetch';
 import {
   calcGermanTax,
   DE_TAX_CLASSES,
@@ -31,6 +32,9 @@ import DeleteModal from "./DeleteModal";
 import Toast from "./Toast";
 
 export default function BudgetTracker() {
+  // Prefetch all API data in the background for faster page switches
+  usePrefetch();
+  
   // theme is managed by next-themes; resolvedTheme gives the actual value (light or dark)
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -398,7 +402,8 @@ export default function BudgetTracker() {
             <Popover open={chatOpen} onOpenChange={(v) => setChatOpen(v)}>
               <PopoverTrigger asChild>
                 <button
-                  className="relative bg-primary text-primary-content rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow"
+                  suppressHydrationWarning
+                  className="relative bg-primary dark:bg-secondary text-primary-content dark:text-secondary-content rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow"
                   title="Chat with AI advisor"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

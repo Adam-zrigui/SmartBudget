@@ -1,4 +1,5 @@
-import { ResponsiveContainer, AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import dynamic from 'next/dynamic';
+const ChartArea = dynamic(() => import('./ChartArea'), { ssr: false, loading: () => <div className="h-48 skeleton-pulse rounded-md" /> });
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 
@@ -136,35 +137,41 @@ export default function Dashboard({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KpiCard
-          label={language === 'de' ? 'Einnahmen' : 'Income'}
-          value={fmt(inc, cur)}
-          sub={`${filtered.filter(t => t.type === 'income').length} ${language === 'de' ? 'Buchungen' : 'Entries'}`}
-          progress={(inc / (inc + exp || 1)) * 100}
-          progressColor="bg-success"
-        />
-        <KpiCard
-          label={language === 'de' ? 'Ausgaben' : 'Expenses'}
-          value={fmt(exp, cur)}
-          sub={`${filtered.filter(t => t.type === 'expense').length} ${language === 'de' ? 'Buchungen' : 'Entries'}`}
-          progress={(exp / (inc + exp || 1)) * 100}
-          progressColor="bg-error"
-        />
-        <KpiCard
-          label={language === 'de' ? 'Sparquote' : 'Savings Rate'}
-          value={`${svRate}%`}
-          sub={svRate >= 20 ? (language === 'de' ? 'Exzellent – Ziel erreicht' : 'Excellent – Goal Reached') : svRate >= 10 ? (language === 'de' ? 'Gut – Luft nach oben' : 'Good – Room for Improvement') : svRate >= 0 ? (language === 'de' ? 'Niedrig – prüfen' : 'Low – Review') : (language === 'de' ? 'Defizit' : 'Deficit')}
-          progress={Math.max(0, svRate)}
-          progressColor={svRate >= 20 ? 'bg-success' : svRate >= 0 ? 'bg-warning' : 'bg-error'}
-          accent
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-children">
+        <div className="animate-stagger-1">
+          <KpiCard
+            label={language === 'de' ? 'Einnahmen' : 'Income'}
+            value={fmt(inc, cur)}
+            sub={`${filtered.filter(t => t.type === 'income').length} ${language === 'de' ? 'Buchungen' : 'Entries'}`}
+            progress={(inc / (inc + exp || 1)) * 100}
+            progressColor="bg-success"
+          />
+        </div>
+        <div className="animate-stagger-2">
+          <KpiCard
+            label={language === 'de' ? 'Ausgaben' : 'Expenses'}
+            value={fmt(exp, cur)}
+            sub={`${filtered.filter(t => t.type === 'expense').length} ${language === 'de' ? 'Buchungen' : 'Entries'}`}
+            progress={(exp / (inc + exp || 1)) * 100}
+            progressColor="bg-error"
+          />
+        </div>
+        <div className="animate-stagger-3">
+          <KpiCard
+            label={language === 'de' ? 'Sparquote' : 'Savings Rate'}
+            value={`${svRate}%`}
+            sub={svRate >= 20 ? (language === 'de' ? 'Exzellent – Ziel erreicht' : 'Excellent – Goal Reached') : svRate >= 10 ? (language === 'de' ? 'Gut – Luft nach oben' : 'Good – Room for Improvement') : svRate >= 0 ? (language === 'de' ? 'Niedrig – prüfen' : 'Low – Review') : (language === 'de' ? 'Defizit' : 'Deficit')}
+            progress={Math.max(0, svRate)}
+            progressColor={svRate >= 20 ? 'bg-success' : svRate >= 0 ? 'bg-warning' : 'bg-error'}
+            accent
+          />
+        </div>
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 animate-children">
         {/* Area chart */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
           <div className="flex items-center justify-between mb-5">
             <div className="text-sm font-semibold">{language === 'de' ? 'Monatsverlauf' : 'Monthly Overview'}</div>
             <div className="flex items-center gap-3 text-xs opacity-40">
@@ -178,30 +185,11 @@ export default function Dashboard({
               </span>
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={monthly} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="gradInc" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={colors.green} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={colors.green} stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradExp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={colors.red} stopOpacity={0.15} />
-                  <stop offset="95%" stopColor={colors.red} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} stroke={colors.border} />
-              <XAxis dataKey="month" tick={{ fill: colors.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: colors.muted, fontSize: 11 }} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => `${(v/1000).toFixed(0)}k`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="income" name={language === 'de' ? 'Einnahmen' : 'Income'} stroke={colors.green} strokeWidth={2} fill="url(#gradInc)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
-              <Area type="monotone" dataKey="expense" name={language === 'de' ? 'Ausgaben' : 'Expenses'} stroke={colors.red} strokeWidth={2} fill="url(#gradExp)" dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
-            </AreaChart>
-          </ResponsiveContainer>
+            <ChartArea monthly={monthly} colors={colors} language={language} fmt={fmt} cur={cur} />
         </div>
 
         {/* Category list */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
           <div className="text-sm font-semibold mb-4">{language === 'de' ? 'Top Ausgaben' : 'Top Expenses'}</div>
           {byCat.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 opacity-30 text-sm">
@@ -213,12 +201,12 @@ export default function Dashboard({
           ) : (
             <div className="space-y-3">
               {byCat.slice(0, 6).map((ct, i) => (
-                <div key={ct.name} className="group animate-in fade-in slide-in-from-left-2 duration-500" style={{ animationDelay: `${i * 50}ms` }}>
+                <div key={ct.name} className="group animate-in fade-in slide-in-from-left-2 duration-500 hover-float" style={{ animationDelay: `${100 + i * 50}ms` }}>
                   <div className="flex items-center justify-between mb-1 group-hover:opacity-100 transition-opacity duration-200">
                     <div className="flex items-center gap-2 text-xs">
                       <span className="opacity-30 font-mono text-[10px] w-4 font-bold">{i + 1}</span>
                       <span className="opacity-60 text-base group-hover:scale-110 transition-transform duration-200">{ct.icon}</span>
-                      <span className="font-medium opacity-80 truncate max-w-[100px] group-hover:opacity-100">{ct.name}</span>
+                      <span className="font-medium opacity-80 truncate max-w-25 group-hover:opacity-100">{ct.name}</span>
                     </div>
                     <span className="text-xs font-bold opacity-70 group-hover:opacity-100 transition-opacity">{fmt(ct.value, cur)}</span>
                   </div>

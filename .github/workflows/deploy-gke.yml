@@ -76,7 +76,7 @@ jobs:
           --from-literal=database-url=${{ secrets.DATABASE_URL }} \
           --from-literal=google-client-id=${{ secrets.GOOGLE_CLIENT_ID }} \
           --from-literal=google-client-secret=${{ secrets.GOOGLE_CLIENT_SECRET }} \
-          --from-literal=cohere-api-key=${{ secrets.COHERE_API_KEY }} \
+          --from-literal=hf-api-key=${{ secrets.HF_API_KEY }} \
           --dry-run=client -o yaml | kubectl apply -f -
 
     - name: Update Deployment image

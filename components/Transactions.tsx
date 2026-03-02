@@ -1,6 +1,7 @@
 import { fmt, getCat, TAG, MONTHS_DE } from "@/lib/utils";
 import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
+import { memo } from "react";
 
 export interface TransactionsProps {
   filtered: any[];
@@ -26,7 +27,7 @@ const calculateNetAmount = (transaction: any) => {
   return amount - vatAmount - churchTaxAmount;
 };
 
-export default function Transactions({
+export default memo(function Transactions({
   filtered,
   bal,
   cur,
@@ -48,7 +49,7 @@ export default function Transactions({
       <div className="card bg-base-100 border border-base-200 shadow-sm p-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative flex-1 min-w-45">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-30"
               xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +92,7 @@ export default function Transactions({
                 onClick={() => setFType(t.v)}
                 className={`px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
                   fType === t.v
-                    ? 'bg-primary text-primary-content shadow-md'
+                    ? 'bg-primary text-primary-content dark:bg-secondary dark:text-secondary-content shadow-md'
                     : 'bg-base-100 hover:bg-base-200 opacity-60 hover:opacity-100'
                 }`}
               >
@@ -152,7 +153,7 @@ export default function Transactions({
                   return (
                     <tr
                       key={t.id}
-                      className="border-b border-base-200 last:border-0 hover:bg-base-200/50 transition-all duration-150 group animate-in fade-in slide-in-from-left-2 duration-500"
+                      className="border-b border-base-200 last:border-0 hover:bg-base-200/50 transition-all duration-300 group animate-in fade-in slide-in-from-left-2"
                     >
                       <td className="py-3 px-5">
                         <span className="text-xs font-mono opacity-50">
@@ -162,7 +163,7 @@ export default function Transactions({
                       <td className="py-3">
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-2 h-2 rounded-full flex-shrink-0 group-hover:scale-125 transition-transform duration-200"
+                            className="w-2 h-2 rounded-full shrink-0 group-hover:scale-125 transition-transform duration-200"
                             style={{ background: t.type === 'income' ? '#10b981' : '#ef4444' }}
                           />
                           <span className="text-sm font-medium group-hover:opacity-100 transition-opacity duration-200">{tr.description}</span>
@@ -265,4 +266,4 @@ export default function Transactions({
       </div>
     </div>
   );
-}
+});

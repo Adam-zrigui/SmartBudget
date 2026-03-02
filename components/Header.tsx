@@ -6,6 +6,13 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export interface HeaderProps {
   tab: string;
@@ -22,6 +29,29 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
   const language = useLanguageStore((s) => s.language);
   const t = translations[language];
   const { data: session } = useSession();
+  const { toast } = useToast();
+
+  const handleExport = async (format: 'csv' | 'json') => {
+    try {
+      const response = await fetch(`/api/transactions/export?format=${format}`);
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `transactions.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast({ title: language === 'de' ? 'Export erfolgreich' : 'Export successful' });
+    } catch (err: any) {
+      toast({ 
+        title: language === 'de' ? 'Export fehlgeschlagen' : 'Export failed',
+        variant: 'destructive' 
+      });
+    }
+  };
   
   const TABS: Record<string, { label: string; description: string }> = {
     dashboard: { 
@@ -40,6 +70,14 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
       label: language === 'de' ? "Steuer" : "Tax", 
       description: language === 'de' ? "Brutto–Netto-Rechner 2024" : "Gross/Net Calculator 2024" 
     },
+    advisor: { 
+      label: language === 'de' ? "Berater" : "Advisor", 
+      description: language === 'de' ? "KI-gestützte Finanzberatung" : "AI-powered financial advice" 
+    },
+    profile: { 
+      label: language === 'de' ? "Profil" : "Profile", 
+      description: language === 'de' ? "Kontoeinstellungen & Sicherheit" : "Account settings & security" 
+    },
   };
   
   const current =
@@ -49,8 +87,8 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
       : { label: tab, description: '' });
 
   return (
-    <header className="sticky top-0 z-40 glass bg-base-100/80 border-b border-base-200 backdrop-blur-md transition-all duration-300">
-      <div className="flex items-center h-16 ui-container mx-auto px-6 gap-4">
+    <header className="sticky top-0 z-40 glass bg-base-100/90 dark:bg-base-900/90 border-b border-base-200 dark:border-base-700 backdrop-blur-md transition-all duration-300">
+      <div className="flex items-center h-16 ui-container mx-auto px-6 gap-4 text-base-content dark:text-base-100">
         {/* Mobile hamburger */}
         <label
           htmlFor="sidebar-toggle"
@@ -76,7 +114,16 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-            <button
+            <Link
+            href="/advisor"
+            className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-primary/10 transition-all duration-300 transform"
+            title={language === 'de' ? 'AI Berater' : 'AI Advisor'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h-1V6a5 5 0 00-10 0v2H5a2 2 0 00-2 2v6a2 2 0 002 2h3v3l4-3h4a2 2 0 002-2v-6a2 2 0 00-2-2z" />
+            </svg>
+          </Link>
+          <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-base-200/50 transition-all duration-300 transform"
             title={isDark ? t.header.lightMode : t.header.darkMode}
@@ -89,15 +136,36 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
               )}
             </svg>
           </button>
-          <button
-            onClick={exportCSV}
-            className="btn btn-ghost btn-sm gap-1.5 text-xs font-medium opacity-60 hover:opacity-100 hover:scale-105 active:scale-95 transition-all duration-200 transform"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-            </svg>
-            {language === 'de' ? 'CSV' : 'CSV'}
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                suppressHydrationWarning
+                className="btn btn-ghost btn-sm gap-1.5 text-xs font-medium opacity-60 hover:opacity-100 hover:scale-105 active:scale-95 transition-all duration-200 transform"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                {language === 'de' ? 'Export' : 'Export'}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => handleExport('csv')} className="cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>{language === 'de' ? 'Als CSV' : 'As CSV'}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('json')} className="cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                <span>{language === 'de' ? 'Als JSON' : 'As JSON'}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Link
             href="/new"
             className="btn btn-primary btn-sm gap-1.5 text-xs font-semibold hover:scale-105 active:scale-95 transition-all duration-200 transform hover:shadow-lg"
@@ -111,7 +179,7 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
           {session ? (
             <Link href="/profile" className="btn btn-ghost btn-circle avatar p-0">
               <div className="w-8 h-8 rounded-full overflow-hidden">
-                <img src={session.user?.image || '/avatar.png'} alt={session.user?.name ?? 'User'} className="object-cover w-full h-full" />
+                <img src={session.user?.image || '/avatar.png'} alt={session.user?.name ?? 'User'} loading="lazy" className="object-cover w-full h-full" />
               </div>
             </Link>
           ) : (

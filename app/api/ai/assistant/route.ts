@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// simple AI helpers; Cohere is primary, HuggingFace is fallback
+// AI provider URLs
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const COHERE_URL = "https://api.cohere.ai/v1/generate";
 const HF_URL_BASE = "https://api-inference.huggingface.co/models";
 // HF model placeholder
@@ -29,9 +30,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply });
     }
 
-    // optionally gather some context from user's transactions
+    // optionally gather some context from user's transactions (optimized query)
     const recent = await prisma.transaction.findMany({
       where: { userId },
+      select: {
+        type: true,
+        amount: true,
+      },
       orderBy: { date: "desc" },
       take: 20,
     });
@@ -45,8 +50,26 @@ export async function POST(req: NextRequest) {
     // error when writing in strict mode.
     let r: Response;
 
-    // use Cohere if configured
-    if (process.env.COHERE_API_KEY) {
+    // use Groq if configured (primary provider)
+    if (process.env.GROQ_API_KEY) {
+      const groqBody = {
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      };
+      r = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify(groqBody),
+      });
+    } else if (process.env.COHERE_API_KEY) {
       const cohBody = {
         model: "command-xlarge-nightly",
         prompt: `${systemPrompt}\nUser: ${message}`,
@@ -72,7 +95,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify(hfBody),
       });
     } else {
-      return NextResponse.json({ error: "No AI provider configured (COHERE_API_KEY or HF_API_KEY required)." }, { status: 500 });
+      return NextResponse.json({ error: "No AI provider configured (GROQ_API_KEY, COHERE_API_KEY or HF_API_KEY required)." }, { status: 500 });
     }
 
     if (!r.ok) {
@@ -93,7 +116,15 @@ export async function POST(req: NextRequest) {
 
     let reply = "";
     const data = await r.json();
-    if (process.env.COHERE_API_KEY) {
+    if (process.env.GROQ_API_KEY) {
+      // Groq returns OpenAI-compatible format: { choices: [{ message: { content: "..." } }] }
+      if (data?.choices && data.choices[0]?.message?.content) {
+        reply = data.choices[0].message.content;
+      } else if (data.error) {
+        console.error('Groq error', data);
+        return NextResponse.json({ error: `Groq error: ${data.error.message || data.error}` }, { status: 502 });
+      }
+    } else if (process.env.COHERE_API_KEY) {
       // Cohere returns { generations: [{ text: "..." }] }
       if (data?.generations && data.generations[0]?.text) {
         reply = data.generations[0].text;
@@ -109,7 +140,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `HF inference error: ${data.error}` }, { status: 502 });
       }
     }
-    return NextResponse.json({ reply });
+    // Return with cache headers (cache for 1 hour)
+    return NextResponse.json({ reply }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, s-maxage=7200',
+      },
+    });
   } catch (err) {
     console.error("AI route error", err);
     const msg = err instanceof Error ? err.message : String(err);

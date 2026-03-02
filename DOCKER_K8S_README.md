@@ -63,7 +63,7 @@ This directory contains all the containerization and orchestration files for dep
    - `NEXTAUTH_SECRET`: NextAuth secret
    - `DATABASE_URL`: Neon PostgreSQL connection string
    - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`: OAuth credentials
-   - `COHERE_API_KEY`: Cohere AI API key (required for assistant)
+   - `HF_API_KEY`: HuggingFace API key (required for assistant)
    - `HF_API_KEY` (optional): HuggingFace fallback
 
 
@@ -139,8 +139,8 @@ Ensure your `DATABASE_URL` (Neon) is correctly configured and the K8s pod can re
 - `NEXTAUTH_SECRET`: Secure random string
 - `DATABASE_URL`: PostgreSQL connection string (Neon)
 - `GOOGLE_CLIENT_ID/SECRET`: OAuth credentials for Google sign-in
-- `COHERE_API_KEY`: API key for Cohere AI (required for assistant feature)
-- `HF_API_KEY` (optional): HuggingFace API key as fallback
+- `HF_API_KEY`: HuggingFace API key for AI assistant
+
 
 ## Scaling
 

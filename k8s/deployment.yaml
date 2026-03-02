@@ -2,11 +2,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: smartbudget
-  namespace: default
+  namespace: smartbudget
   labels:
     app: smartbudget
+    version: v1
 spec:
-  replicas: 2
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: smartbudget
@@ -14,11 +20,17 @@ spec:
     metadata:
       labels:
         app: smartbudget
+        version: v1
     spec:
+      serviceAccountName: smartbudget
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
       containers:
       - name: next-app
-        image: your-registry/smartbudget:latest  # change to your registry
-        imagePullPolicy: IfNotPresent
+        image: smartbudget:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
@@ -51,12 +63,14 @@ spec:
               name: app-secrets
               key: google-client-secret
               optional: true
-        - name: COHERE_API_KEY
+        - name: GROQ_API_KEY
           valueFrom:
             secretKeyRef:
               name: app-secrets
-              key: cohere-api-key
+              key: groq-api-key
               optional: true
+        - name: USE_LOCAL_AI
+          value: "false"
         livenessProbe:
           httpGet:
             path: /
@@ -64,16 +78,48 @@ spec:
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
+          failureThreshold: 3
         readinessProbe:
           httpGet:
             path: /
             port: 3000
           initialDelaySeconds: 10
           periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
         resources:
           requests:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "250m"
           limits:
-            memory: "512Mi"
+            memory: "1Gi"
             cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.next/cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - smartbudget
+              topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 30

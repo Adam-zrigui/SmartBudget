@@ -28,7 +28,7 @@ export interface AnalyticsProps {
 export default function Analytics(props: Partial<AnalyticsProps>) {
   const language = useLanguageStore((s) => s.language);
   const t = translations[language];
-  const [txs, setTxs] = useState<any[] | null>(null);
+  const [txs, setTxs] = useState<any[]>([]);
 
   const {
     inc: pInc,
@@ -50,8 +50,7 @@ export default function Analytics(props: Partial<AnalyticsProps>) {
         const res = await fetch('/api/transactions');
         if (!res.ok) return;
         const data = await res.json();
-        if (cancelled) return;
-        setTxs(data);
+        if (!cancelled) setTxs(data || []);
       } catch (e) {
         // ignore
       }
@@ -214,10 +213,10 @@ export default function Analytics(props: Partial<AnalyticsProps>) {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {byCat.map((ct) => {
+            {byCat.map((ct: any) => {
               const pct = exp > 0 ? (ct.value / exp) * 100 : 0;
               return (
-                <div key={ct.name} className="p-4 rounded-xl bg-base-200/60 border border-base-300/50 hover:bg-base-200 hover:shadow-md transition-all duration-200 hover:scale-102 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div key={ct.name} className="p-4 rounded-xl bg-base-200/60 border border-base-300/50 hover:bg-base-200 hover:shadow-md transition-all duration-300 hover:scale-102 animate-in fade-in slide-in-from-bottom-2">
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{ct.icon}</span>

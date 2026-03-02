@@ -182,7 +182,7 @@ export default function SalaryPlanner({
   return (
     <div className="space-y-6">
       {/* Add Salary Form - EDITABLE ON HOME PAGE */}
-      <div className="card bg-gradient-to-br from-success/10 to-success/5 border border-success/20 shadow-sm p-6">
+      <div className="card bg-linear-to-br from-success/10 to-success/5 border border-success/20 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">{language === 'de' ? '💰 Gehalt hinzufügen & aufteilen' : '💰 Add & Split Salary'}</h3>
           <button
@@ -248,7 +248,7 @@ export default function SalaryPlanner({
                 {monthlySalaryData.salary > 0 && (
                   <div className="w-full h-2 bg-base-300 rounded-full overflow-hidden mb-3">
                     <div 
-                      className="h-full bg-gradient-to-r from-success to-success/70 transition-all duration-300"
+                      className="h-full bg-linear-to-r from-success to-success/70 transition-all duration-300"
                       style={{ width: `${Math.min(100, (items.reduce((a, b) => a + (b.amount || 0), 0) / (monthlySalaryData.salary || 1)) * 100)}%` }}
                     />
                   </div>
@@ -285,7 +285,7 @@ export default function SalaryPlanner({
       {monthlySalaryData.salary > 0 && (
         <>
           {/* Salary Header */}
-          <div className="card bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-sm p-6">
+          <div className="card bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20 shadow-sm p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider opacity-60 mb-2">
@@ -304,7 +304,7 @@ export default function SalaryPlanner({
             </div>
             <div className="w-full h-2 bg-base-300 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-primary to-primary/70 transition-all duration-700"
+                className="h-full bg-linear-to-r from-primary to-primary/70 transition-all duration-700"
                 style={{ width: `${Math.min(100, (monthlySalaryData.totalAllocated / monthlySalaryData.salary) * 100)}%` }}
               />
             </div>

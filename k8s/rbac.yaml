@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: smartbudget
+  namespace: smartbudget
+  labels:
+    app: smartbudget
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: smartbudget
+  labels:
+    app: smartbudget
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: smartbudget
+  labels:
+    app: smartbudget
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: smartbudget
+subjects:
+- kind: ServiceAccount
+  name: smartbudget
+  namespace: smartbudget

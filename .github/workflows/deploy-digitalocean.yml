@@ -1,0 +1,64 @@
+name: Deploy to DigitalOcean DOKS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY }}/smartbudget:${{ github.sha }} .
+          docker build -t registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY }}/smartbudget:latest .
+
+      - name: Push to DigitalOcean Registry
+        run: |
+          echo ${{ secrets.DIGITALOCEAN_TOKEN }} | docker login -u ${{ secrets.DIGITALOCEAN_USERNAME }} --password-stdin registry.digitalocean.com
+          docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY }}/smartbudget:${{ github.sha }}
+          docker push registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY }}/smartbudget:latest
+
+      - name: Update kubeconfig
+        run: |
+          doctl kubernetes cluster kubeconfig save smartbudget
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl set image deployment/smartbudget \
+            next-app=registry.digitalocean.com/${{ secrets.DIGITALOCEAN_REGISTRY }}/smartbudget:${{ github.sha }} \
+            -n smartbudget \
+            --record
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/smartbudget -n smartbudget --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n smartbudget
+          kubectl get svc -n smartbudget
+
+      - name: Slack notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "SmartBudget Deployment",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Deployment to DigitalOcean: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }

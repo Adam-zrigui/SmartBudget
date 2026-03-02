@@ -11,6 +11,7 @@ export const SVGIcon = ({ d, size = 16, color = 'currentColor' }: { d: string; s
     strokeWidth={2}
     strokeLinecap="round"
     strokeLinejoin="round"
+    suppressHydrationWarning
   >
     <path d={d} />
   </svg>

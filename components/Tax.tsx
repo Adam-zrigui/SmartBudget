@@ -36,6 +36,41 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
   const [suggestedGross, setSuggestedGross] = useState<number | null>(null);
   const [autoApplied, setAutoApplied] = useState(false);
 
+  // state tax info
+  interface StateTax {
+    name: string;
+    abbr?: string;
+    vat_standard?: number;
+    vat_reduced?: number;
+    church_tax_rate?: number;
+    municipal_tax_range?: { min: number; max: number };
+    notes?: string;
+  }
+  const [statesData, setStatesData] = useState<StateTax[] | null>(null);
+  const [statesLoading, setStatesLoading] = useState(true);
+  const [statesError, setStatesError] = useState<string | null>(null);
+  const [selectedState, setSelectedState] = useState<StateTax | null>(null);
+  const [showStates, setShowStates] = useState(false); // toggle visibility of state rates
+
+  useEffect(() => {
+    let mounted = true;
+    setStatesLoading(true);
+    fetch('/api/taxes')
+      .then((r) => r.json())
+      .then((j) => {
+        if (!mounted) return;
+        if (!j.ok) throw new Error(j.error || 'Failed to load');
+        const items = Array.isArray(j.data) ? j.data : Object.values(j.data ?? {});
+        setStatesData(items as StateTax[]);
+        if (items.length > 0) setSelectedState(items[0] as StateTax);
+      })
+      .catch((e) => setStatesError(e.message || String(e)))
+      .finally(() => setStatesLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -171,14 +206,22 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
       </div>
 
       {/* Result hero */}
-      <div className="card bg-gradient-to-br from-primary/8 to-base-100 text-base-content shadow-md p-5 animate-in fade-in slide-in-from-bottom-2 duration-700">
+      <div className="card bg-linear-to-br from-primary/8 to-base-100 text-base-content shadow-md p-5 animate-in fade-in slide-in-from-bottom-2 duration-700">
         <div className="text-xs opacity-60 uppercase tracking-wider mb-1">{t.tax.netSalaryMonth}</div>
         <div className="text-4xl font-bold tabular-nums mb-1 text-primary">{fmt(taxResult.netMonthly)}</div>
         <div className="text-xs opacity-60">{t.tax.effectiveRate(taxResult.effectiveRate)} · {fmt(taxResult.totalDeductions)} {t.tax.deductions}</div>
 
-        <div className="mt-3">
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:gap-2">
           <button className="btn btn-outline btn-sm" onClick={() => setShowMatrix((s) => !s)}>
             {showMatrix ? t.tax.deductions : (language === 'de' ? 'Vergleich ausblenden' : 'Hide comparison')}
+          </button>
+          <button
+            className="btn btn-outline btn-sm mt-2 sm:mt-0"
+            onClick={() => setShowStates((s) => !s)}
+          >
+            {showStates
+              ? (language === 'de' ? 'Steuersätze ausblenden' : 'Hide state rates')
+              : (language === 'de' ? 'Steuersätze anzeigen' : 'Show state rates')}
           </button>
         </div>
 
@@ -229,7 +272,7 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
             const icon = DEDUCTION_ICONS[key] || 'ℹ️';
             const label = (t.tax as any)[key] ?? key;
             return (
-              <div key={key} className="flex items-center justify-between py-2 border-b border-base-200 last:border-0 hover:opacity-100 transition-opacity duration-200 animate-in fade-in duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
+              <div key={key} className="flex items-center justify-between py-2 border-b border-base-200 last:border-0 hover:opacity-100 transition-opacity animate-in fade-in duration-500" style={{ animationDelay: `${idx * 50}ms` }}>
                 <div className="flex items-center gap-2">
                   <span className="text-base">{icon}</span>
                   <span className="text-sm opacity-70">{label}</span>
@@ -266,6 +309,105 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
             </table>
           </div>
         </div>
+      )}
+
+      {/* State rates information (was previously on separate /taxes page) */}
+      {showStates && (
+        <>
+          {statesLoading && (
+            <div className="mt-6 text-center">
+              <div className="spinner spinner-md"></div>
+            </div>
+          )}
+          {statesError && (
+            <div className="mt-6 alert alert-error rounded-2xl">
+              <span>{statesError}</span>
+            </div>
+          )}
+          {statesData && selectedState && (
+            <div className="mt-8 max-h-[70vh] overflow-auto">
+          <div className="text-xl font-bold text-base-content mb-4">
+            {language === 'de' ? 'Bundesländer Steuersätze' : 'State Tax Rates'}
+          </div>
+          <div className="grid grid-cols-1 md:flex md:gap-6">
+            <aside className="w-full md:w-64">
+              <div className="bg-base-100 border border-base-200/50 rounded-2xl p-6 sticky top-0">
+                <h2 className="font-semibold mb-4">{language === 'de' ? 'Bundesländer' : 'States'}</h2>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                  {statesData.map((state) => (
+                    <button
+                      key={state.name}
+                      onClick={() => setSelectedState(state)}
+                      className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 ${
+                        selectedState?.name === state.name
+                          ? 'bg-primary/10 dark:bg-primary/70 text-primary-content shadow-lg'
+                          : 'hover:bg-base-200/50 dark:hover:bg-base-300/50'
+                      }`}
+                    >
+                      <div className="font-medium text-sm">{state.name}</div>
+                      <div className={`text-xs ${selectedState?.name === state.name ? 'opacity-80' : 'opacity-60'}`}>{state.abbr}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </aside>
+            <section className="flex-1">
+              <div className="space-y-6">
+                <div className="bg-base-100 border border-base-200/50 rounded-2xl p-8">
+                  <div className="flex items-start justify-between gap-6">
+                    <div>
+                      <h2 className="text-3xl font-bold text-base-content">{selectedState.name}</h2>
+                      {selectedState.notes && <p className="text-sm text-base-content/70 mt-2">{selectedState.notes}</p>}
+                    </div>
+                    <div className="text-4xl font-bold text-primary bg-primary/10 rounded-xl px-6 py-4">{selectedState.abbr}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-base-100 border border-base-200/50 rounded-2xl p-6">
+                    <div className="text-xs font-semibold text-base-content/60 uppercase tracking-widest">{language === 'de' ? 'USt Standard' : 'VAT Standard Rate'}</div>
+                    <div className="mt-3">
+                      <div className="text-4xl font-bold text-primary">{selectedState.vat_standard}%</div>
+                      <p className="text-xs text-base-content/70 mt-2">{language === 'de' ? 'Standardrate für die meisten Waren und Dienstleistungen' : 'Standard rate for most goods and services'}</p>
+                    </div>
+                  </div>
+                  <div className="bg-base-100 border border-base-200/50 rounded-2xl p-6">
+                    <div className="text-xs font-semibold text-base-content/60 uppercase tracking-widest">{language === 'de' ? 'USt Ermäßigt' : 'VAT Reduced Rate'}</div>
+                    <div className="mt-3">
+                      <div className="text-4xl font-bold text-secondary">{selectedState.vat_reduced}%</div>
+                      <p className="text-xs text-base-content/70 mt-2">{language === 'de' ? 'Bücher, Lebensmittel, Medizin, ...' : 'Books, food, medicine, and essentials'}</p>
+                    </div>
+                  </div>
+                  <div className="bg-base-100 border border-base-200/50 rounded-2xl p-6">
+                    <div className="text-xs font-semibold text-base-content/60 uppercase tracking-widest">{language === 'de' ? 'Kirchensteuer' : 'Church Tax'}</div>
+                    <div className="mt-3">
+                      <div className="text-4xl font-bold text-accent">{selectedState.church_tax_rate}%</div>
+                      <p className="text-xs text-base-content/70 mt-2">{language === 'de' ? 'Nur für Kirchenmitglieder' : 'For registered church members only'}</p>
+                    </div>
+                  </div>
+                  {selectedState.municipal_tax_range && (
+                    <div className="bg-base-100 border border-base-200/50 rounded-2xl p-6">
+                      <div className="text-xs font-semibold text-base-content/60 uppercase tracking-widest">{language === 'de' ? 'Gewerbesteuer' : 'Municipal Trade Tax'}</div>
+                      <div className="mt-3">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm text-base-content/70">{language === 'de' ? 'Hebesatzbereich:' : 'Multiplier Range:'}</span>
+                          <span className="text-2xl font-bold text-base-content">{selectedState.municipal_tax_range.min}% – {selectedState.municipal_tax_range.max}%</span>
+                        </div>
+                        <p className="text-xs text-base-content/70 mt-2">{language === 'de' ? 'Variiert je nach Gemeinde' : 'Varies by municipality (Hebesatz)'}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-warning/10 border border-warning/30 rounded-2xl p-6">
+                  <p className="text-sm text-base-content/80 leading-relaxed">
+                    <strong>Disclaimer:</strong> {language === 'de' ? 'Steuergesetze ändern sich häufig...' : 'Tax regulations change frequently and may have local variations. This information is provided for reference only. For accurate tax calculations and official filings, please consult your state\'s finance office (Finanzbehörde) or a qualified tax advisor.'}
+                  </p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+          )}
+        </>
       )}
     </div>
   );

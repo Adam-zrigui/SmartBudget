@@ -1,12 +1,12 @@
 # 💰 SmartBudget
 
-AI-powered personal finance management platform. Track expenses, manage income, plan savings goals, and get personalized financial recommendations powered by Cohere AI.
+AI-powered personal finance management platform. Track expenses, manage income, plan savings goals, and get personalized financial recommendations powered by generative AI (HuggingFace).
 
 ## ✨ Features
 
 - **Dashboard**: Real-time overview of income, expenses, and savings metrics
 - **Transaction Management**: Add, categorize, and track financial transactions
-- **AI Financial Advisor**: Chat with an intelligent assistant for personalized financial advice (powered by Cohere)
+- **AI Financial Advisor**: Chat with an intelligent assistant for personalized financial advice (powered by HuggingFace)
 - **Budget Planning**: Create and monitor budgets across spending categories
 - **Tax Calculation**: Built-in German tax calculations (VAT, church tax, etc.)
 - **Authentication**: Secure user sign-up/login with NextAuth (Google OAuth)
@@ -31,7 +31,7 @@ AI-powered personal finance management platform. Track expenses, manage income, 
 - **Neon PostgreSQL** - Cloud-hosted managed PostgreSQL
 
 ### AI
-- **Cohere API** - Generative AI for financial advice
+- **HuggingFace Inference API** - Generative AI for financial advice
 
 ### DevOps
 - **Docker** - Container orchestration (production deployments)
@@ -43,7 +43,7 @@ AI-powered personal finance management platform. Track expenses, manage income, 
 - **Node.js 20+** and **pnpm** (or npm/yarn)
 - **PostgreSQL database** (Neon account for cloud DB)
 - **Google OAuth credentials** (for authentication)
-- **Cohere API key** (for AI features)
+- **HuggingFace API key** (for AI features)
 - **Docker** (for containerization)
 - **kubectl** & **gcloud CLI** (for K8s deployment)
 
@@ -73,8 +73,10 @@ NEXTAUTH_SECRET="your-secret-key-here"
 GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-client-secret"
 
-# Cohere AI
-COHERE_API_KEY="your-cohere-api-key"
+# AI Configuration
+HF_API_KEY="your-huggingface-api-key"
+HF_MODEL="google/flan-t5-small"  # or any model you have access to via the router
+
 
 # Optional: HuggingFace fallback
 HF_API_KEY="your-hf-token"
@@ -145,7 +147,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The **Advisor** component provides real-time financial guidance:
 
-- **Multi-provider support**: Cohere (primary), HuggingFace (fallback)
+- **AI Support**: HuggingFace Inference API (primary)
 - **Context-aware**: Uses your transaction history for personalized advice
 - **Goal planning**: Suggests step-by-step plans to reach financial milestones
 - **Real-time updates**: Chat messages auto-scroll and display AI responses
@@ -206,7 +208,7 @@ kubectl get svc smartbudget-service
    - `NEXTAUTH_SECRET`
    - `DATABASE_URL`
    - `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET`
-   - `COHERE_API_KEY`
+   - `HF_API_KEY`
 
 2. Push to `main` or `develop` branch — GitHub Actions will automatically build and deploy to GKE.
 
@@ -219,8 +221,7 @@ kubectl get svc smartbudget-service
 | `NEXTAUTH_SECRET` | ✅ | Secure random string for session encryption |
 | `GOOGLE_CLIENT_ID` | ✅ | OAuth client ID from Google Console |
 | `GOOGLE_CLIENT_SECRET` | ✅ | OAuth client secret |
-| `COHERE_API_KEY` | ✅ | Cohere API key for AI features |
-| `HF_API_KEY` | ❌ | HuggingFace API key (fallback AI provider) |
+| `HF_API_KEY` | ✅ | HuggingFace API key for AI features |
 | `NODE_ENV` | ❌ | `development` or `production` |
 
 ## 📚 Database Schema
@@ -252,7 +253,7 @@ pnpm start
 ## 🚨 Troubleshooting
 
 ### Chat not responding
-- Ensure `COHERE_API_KEY` is set and valid
+- Ensure `HF_API_KEY` is set and valid
 - Check server logs: `pnpm dev` output or `kubectl logs deployment/smartbudget`
 
 ### Database connection error
@@ -275,7 +276,7 @@ pnpm start
 - [Docker & Kubernetes Setup](./DOCKER_K8S_README.md) - Detailed deployment guide
 - [Prisma Schema](./prisma/schema.prisma) - Database structure
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Cohere API Docs](https://docs.cohere.com)
+- [HuggingFace Inference Docs](https://huggingface.co/docs/api-inference)
 
 ## 🤝 Contributing
 
