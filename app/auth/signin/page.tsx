@@ -198,15 +198,6 @@ function SignInContent() {
                 </div>
               </div>
 
-              <a
-                href="/auth/signup"
-                className="w-full py-3 px-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 border border-base-300/50 dark:border-base-700/50 hover:border-base-300 dark:hover:border-base-600 hover:bg-base-100 dark:hover:bg-base-800 hover:scale-105 active:scale-95 text-base-900 dark:text-base-100 group relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700"
-                style={{ animationDelay: '700ms' }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 transform translate-x-96 group-hover:translate-x-0 transition-transform duration-700"></div>
-                <span className="group-hover:scale-125 transition-transform duration-300">✨</span>
-                <span className="relative">{language === 'de' ? 'Neues Konto erstellen' : 'Create new account'}</span>
-              </a>
             </div>
 
             {/* Card Footer */}
