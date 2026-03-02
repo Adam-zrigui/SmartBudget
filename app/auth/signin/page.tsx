@@ -16,14 +16,11 @@ function SignInContent() {
 
   const handleGoogle = async () => {
     setIsLoading(true);
-    const res = await signIn('google', { redirect: false, callbackUrl });
-    if (res?.error) {
-      toast.toast({ title: res.error, variant: 'destructive' });
-      setIsLoading(false);
-    } else {
-      toast.toast({ title: language === 'de' ? 'Erfolgreich eingeloggt' : 'Successfully signed in' });
-      router.push(callbackUrl);
-    }
+    // let next-auth handle the redirect directly; avoiding `redirect: false`
+    // prevents a POST with urlencoded body that the server tries to
+    // JSON.parse and crashes (see Vercel logs about `redirect=f...`).
+    await signIn('google', { callbackUrl });
+    // execution will usually not reach here because of navigation
   };
 
   const language = useLanguageStore((s) => s.language);
