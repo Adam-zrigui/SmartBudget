@@ -10,8 +10,8 @@ status = 200
 
 [context.production.environment]
 NODE_ENV = "production"
-NEXT_PUBLIC_APP_URL = "https://YOUR_NETLIFY_DOMAIN.netlify.app"
-NEXTAUTH_URL = "https://YOUR_NETLIFY_DOMAIN.netlify.app"
+NEXT_PUBLIC_APP_URL = "https://smartbudgets.netlify.app"
+NEXTAUTH_URL = "https://smartbudgets.netlify.app"
 
 [[plugins]]
 package = "@netlify/plugin-nextjs"
