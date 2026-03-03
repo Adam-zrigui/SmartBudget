@@ -14,6 +14,9 @@ function SignInContent() {
   const errorParam = params.get('error');
   const [isLoading, setIsLoading] = useState(false);
 
+  const language = useLanguageStore((s) => s.language);
+  const t = useTranslations(language);
+
   // show error toast if google sign-in failed
   if (errorParam === 'google') {
     toast.toast({ title: language === 'de' ? 'Google-Anmeldung fehlgeschlagen' : 'Google sign-in failed', variant: 'destructive' });
@@ -26,9 +29,6 @@ function SignInContent() {
     url.searchParams.set('callbackUrl', callbackUrl);
     window.location.href = url.toString();
   };
-
-  const language = useLanguageStore((s) => s.language);
-  const t = useTranslations(language);
 
   const features = [
     {

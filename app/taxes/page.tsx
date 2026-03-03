@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+// avoiding Next.js Link due to runtime bug
+
 import PageAnimationWrapper from '@/components/PageAnimationWrapper';
 
 type StateTax = {
@@ -171,9 +172,9 @@ export default function TaxesPage() {
 
                   {/* Back Link */}
                   <div className="flex justify-start">
-                    <Link href="/" className="btn btn-outline rounded-xl">
-                      ← Back to Dashboard
-                    </Link>
+                    <a href="/" className="btn btn-outline rounded-xl">
+                      Back to dashboard
+                    </a>
                   </div>
                 </div>
               )}
