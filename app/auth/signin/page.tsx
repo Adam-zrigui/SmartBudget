@@ -11,7 +11,13 @@ function SignInContent() {
   const toast = useToast();
   const params = useSearchParams();
   const callbackUrl = params.get('callbackUrl') || '/';
+  const errorParam = params.get('error');
   const [isLoading, setIsLoading] = useState(false);
+
+  // show error toast if google sign-in failed
+  if (errorParam === 'google') {
+    toast.toast({ title: language === 'de' ? 'Google-Anmeldung fehlgeschlagen' : 'Google sign-in failed', variant: 'destructive' });
+  }
 
   const handleGoogle = async () => {
     setIsLoading(true);
