@@ -11,3 +11,8 @@ export default withAuth(
   }
 );
 
+export const config = {
+  matcher: [
+    "/((?!api/auth|auth|api/transactions|api/money-tips|_next|favicon.ico).*)",
+  ],
+};
