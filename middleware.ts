@@ -14,7 +14,6 @@ export function middleware(req: NextRequest) {
     pathname.startsWith('/api/public') ||
     pathname === '/favicon.ico' ||
     pathname.startsWith('/auth/signin') ||
-    pathname.startsWith('/auth/signup') ||
     pathname === '/login' // still allow legacy redirect page
   ) {
     return NextResponse.next();
