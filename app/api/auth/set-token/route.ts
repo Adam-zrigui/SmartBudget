@@ -4,9 +4,14 @@ export async function POST(req: NextRequest) {
   try {
     const { token } = await req.json();
     
-    const response = NextResponse.json({ success: true });
+    if (!token) {
+      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+    }
+    
+    const response = NextResponse.json({ success: true, token: !!token });
     
     // Set token in httpOnly cookie (secure in production)
+    // Important: SameSite=Lax allows cross-site cookie setting on navigation (POST redirects)
     response.cookies.set('_auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -21,3 +26,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to set token' }, { status: 500 });
   }
 }
+

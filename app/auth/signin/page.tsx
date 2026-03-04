@@ -40,14 +40,27 @@ function SignInContent() {
         }
       }
 
-      // give browser time to write cookie
-      await new Promise((r) => setTimeout(r, 50));
+      // give browser more time to persist httpOnly cookie on production (Vercel)
+      // and verify by making a small request
+      await new Promise((r) => setTimeout(r, 200));
+      
+      // Verify token is accessible before redirecting
+      try {
+        const verifyRes = await fetch('/api/auth/verify', {
+          credentials: 'include',
+        });
+        if (!verifyRes.ok) {
+          console.warn('Token verification failed, but proceeding with redirect');
+        }
+      } catch (e) {
+        console.warn('Could not verify token:', e);
+      }
 
       console.log('callbackUrl', callbackUrl);
-      console.log('cookies after set', document.cookie);
-
+      
       toast.toast({ title: language === 'de' ? 'Erfolgreich eingeloggt' : 'Successfully signed in' });
-      window.location.href = callbackUrl;
+      // Use router.replace instead of location.href for smoother navigation
+      router.replace(callbackUrl);
     } catch (err: any) {
       toast.toast({ title: err.message || 'Sign in failed', variant: 'destructive' });
     } finally {
