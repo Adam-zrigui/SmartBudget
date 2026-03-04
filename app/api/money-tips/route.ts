@@ -1,22 +1,29 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Generate personalized money-saving recommendations based on user spending
+ * Cached for 1 hour as recommendations don't change frequently
  */
+// Explicitly mark as dynamic since it reads from session/auth
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
+
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id: string }).id;
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Auth disabled - using dummy userId for now
+    const userId = "demo-user-id";
+    // Commented out auth check:
+    // const session = await getServerSession(authOptions);
+    // if (!session?.user) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
+    // const userId = (session.user as { id: string }).id;
+    // if (!userId) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const { searchParams } = new URL(req.url);
     const language = searchParams.get("language") || "de";

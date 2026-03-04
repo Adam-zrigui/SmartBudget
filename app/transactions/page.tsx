@@ -1,12 +1,9 @@
 'use client'
 
 import { useState, useEffect, useId, useMemo, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
-import PageAnimationWrapper from '@/components/PageAnimationWrapper';
 import Sidebar from '@/components/Sidebar';
 import Transactions from '@/components/Transactions';
 import TransactionsLoading from '@/components/TransactionsLoading';
@@ -14,8 +11,6 @@ import Advisor from '@/components/Advisor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 export default function TransactionsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const { resolvedTheme } = useTheme();
   const language = useLanguageStore((s) => s.language);
 
@@ -49,7 +44,6 @@ export default function TransactionsPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (status !== 'authenticated') return;
       setIsLoading(true);
       try {
         const res = await fetch('/api/transactions');
@@ -65,7 +59,7 @@ export default function TransactionsPage() {
     }
     load();
     return () => { cancelled = true };
-  }, [status]);
+  }, []);
 
   // Memoize filter functions to prevent unnecessary re-renders
   const setFTypeCallback = useCallback((type: string) => setFType(type), []);
@@ -105,21 +99,11 @@ export default function TransactionsPage() {
     }, 0);
   }, [filtered]);
 
-  if (status === 'loading') {
-    return <div className="p-8">Loading...</div>;
-  }
-
-  if (!session) {
-    router.push('/auth/signin');
-    return null;
-  }
-
   if (isLoading) {
     return <TransactionsLoading />;
   }
 
   return (
-    <PageAnimationWrapper>
     <div className="flex min-h-screen bg-base-100 text-base-content">
         <div className="hidden lg:flex lg:shrink-0">
           <Sidebar taxResult={{}} txsLength={filtered.length} tab="transactions" setTab={() => {}} />
@@ -179,6 +163,5 @@ export default function TransactionsPage() {
         </Popover>
       </div>
     </div>
-    </PageAnimationWrapper>
   );
 }

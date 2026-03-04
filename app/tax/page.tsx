@@ -1,14 +1,11 @@
 'use client'
 
 import { useState, useEffect, useId } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import Tax from '@/components/Tax';
-import PageAnimationWrapper from '@/components/PageAnimationWrapper';
 import Advisor from '@/components/Advisor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { calcGermanTax } from '@/lib/utils';
@@ -44,8 +41,6 @@ const DE_STATES = [
 const TAG = {};
 
 export default function TaxPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const { resolvedTheme } = useTheme();
   const language = useLanguageStore((s) => s.language);
 
@@ -96,17 +91,7 @@ export default function TaxPage() {
     return () => { cancelled = true; };
   }, [tax]);
 
-  if (status === 'loading') {
-    return <div className="p-8">Loading...</div>;
-  }
-
-  if (!session) {
-    router.push('/auth/signin');
-    return null;
-  }
-
   return (
-    <PageAnimationWrapper>
     <div>
       <div className="flex min-h-screen bg-base-100 text-base-content">
         <div className="hidden lg:flex lg:shrink-0">
@@ -174,6 +159,5 @@ export default function TaxPage() {
         </Popover>
       </div>
     </div>
-    </PageAnimationWrapper>
   );
 }

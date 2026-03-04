@@ -3,9 +3,8 @@
 import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { useTheme } from "next-themes";
-// using plain anchors instead of Next.js Link to avoid client runtime bug
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSession, signOut } from "next-auth/react";
 import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
@@ -28,7 +27,6 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
   
   const language = useLanguageStore((s) => s.language);
   const t = translations[language];
-  const { data: session } = useSession();
   const { toast } = useToast();
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -114,15 +112,15 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <a
+            <Link
             href="/advisor"
             className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-primary/10 transition-all duration-300 transform"
             title={language === 'de' ? 'AI Berater' : 'AI Advisor'}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h-1V6a5 5 0 00-10 0v2H5a2 2 0 00-2 2v6a2 2 0 002 2h3v3l4-3h4a2 2 0 002-2v-6a2 2 0 00-2-2z" />
             </svg>
-          </a>
+          </Link>
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-base-200/50 transition-all duration-300 transform"
@@ -166,7 +164,7 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <a
+          <Link
             href="/new"
             className="btn btn-primary btn-sm gap-1.5 text-xs font-semibold hover:scale-105 active:scale-95 transition-all duration-200 transform hover:shadow-lg"
           >
@@ -174,19 +172,13 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
             {language === 'de' ? 'Neue Buchung' : 'New Entry'}
-          </a>
-          {/* auth actions */}
-          {session ? (
-            <a href="/profile" className="btn btn-ghost btn-circle avatar p-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden">
-                <img src={session.user?.image || '/avatar.png'} alt={session.user?.name ?? 'User'} loading="lazy" className="object-cover w-full h-full" />
-              </div>
-            </a>
-          ) : (
-            <a href="/auth/signin" className="btn btn-ghost btn-sm text-xs">
-              {t.auth.signIn}
-            </a>
-          )}
+          </Link>
+          {/* profile link */}
+          <Link href="/profile" className="btn btn-ghost btn-circle avatar p-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden">
+              <img src="/avatar.png" alt="User" loading="lazy" className="object-cover w-full h-full" />
+            </div>
+          </Link>
         </div>
       </div>
     </header>

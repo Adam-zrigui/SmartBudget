@@ -17,6 +17,23 @@ export const fmt = (v: number, cur: string = 'EUR'): string => {
   }).format(v);
 };
 
+// wrapper around fetch that handles non-JSON and HTTP errors consistently
+export async function fetchJson(input: RequestInfo, init?: RequestInit) {
+  const res = await fetch(input, init);
+  const text = await res.text();
+  let data: any = text;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    // if not json, keep raw text
+  }
+  if (!res.ok) {
+    const msg = data?.error || data?.message || text || res.statusText;
+    throw new Error(msg);
+  }
+  return data;
+}
+
 // Month names in German
 export const MONTHS_DE = [
   'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',

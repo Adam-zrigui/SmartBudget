@@ -3,7 +3,7 @@ import { IC, fmt, calcGermanTax } from "@/lib/utils";
 import { SVGIcon as SVG } from "./SVGIcon";
 import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
-// using plain anchors to avoid Next.js Link runtime bug
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export interface SidebarProps {
@@ -120,13 +120,13 @@ export default function Sidebar({
           
           if (isPageRoute) {
             return (
-              <a
+              <Link
                 key={tabItem.id}
                 href={tabItem.id === 'dashboard' ? '/' : `/${tabItem.id}`}
                 className={navClasses}
               >
                 {navContent}
-              </a>
+              </Link>
             );
           } else {
             return (

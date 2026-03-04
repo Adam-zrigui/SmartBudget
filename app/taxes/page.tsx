@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-// avoiding Next.js Link due to runtime bug
-
-import PageAnimationWrapper from '@/components/PageAnimationWrapper';
+import Link from 'next/link';
 
 type StateTax = {
   name: string;
@@ -70,7 +68,6 @@ export default function TaxesPage() {
     );
 
   return (
-    <PageAnimationWrapper>
     <div className="min-h-screen bg-base-100 py-12">
       <div className="ui-container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
@@ -172,9 +169,9 @@ export default function TaxesPage() {
 
                   {/* Back Link */}
                   <div className="flex justify-start">
-                    <a href="/" className="btn btn-outline rounded-xl">
-                      Back to dashboard
-                    </a>
+                    <Link href="/" className="btn btn-outline rounded-xl">
+                      ← Back to Dashboard
+                    </Link>
                   </div>
                 </div>
               )}
@@ -183,6 +180,5 @@ export default function TaxesPage() {
         </div>
       </div>
     </div>
-    </PageAnimationWrapper>
   );
 }

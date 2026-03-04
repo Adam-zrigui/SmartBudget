@@ -1,18 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+
+// Mutation endpoints - keep dynamic, no caching
+export const dynamic = 'force-dynamic';
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    const userId = (session as any)?.user?.id;
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Auth disabled - using dummy userId for now
+    const userId = "demo-user-id";
+    // Commented out auth check:
+    // const session = await getServerSession(authOptions);
+    // const userId = (session as any)?.user?.id;
+    // if (!userId) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const { id } = params;
     const body = await req.json();
@@ -59,11 +65,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
     try {
-    const session = await getServerSession(authOptions);
-    const userId = (session as any)?.user?.id;
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Auth disabled - using dummy userId for now
+    const userId = "demo-user-id";
+    // Commented out auth check:
+    // const session = await getServerSession(authOptions);
+    // const userId = (session as any)?.user?.id;
+    // if (!userId) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const { id } = params;
 
