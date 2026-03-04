@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { NextRequest, NextResponse } from "next/server";
 
 // Export endpoint - keep dynamic, no caching (fresh data for exports)
@@ -8,14 +7,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    // Auth disabled - using dummy userId for now
-    const userId = "demo-user-id";
-    // Commented out auth check:
-    // const session = await getServerSession(authOptions);
-    // const userId = (session as any)?.user?.id;
-    // if (!userId) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // Get Firebase user ID from token
+    const userId = await getAuthenticatedUserId(req);
 
     // reuse query filtering logic from /api/transactions
     const { searchParams } = new URL(req.url);

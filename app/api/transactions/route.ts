@@ -1,18 +1,11 @@
 import { prisma } from "@/lib/prisma";
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    // Auth disabled - using dummy userId for now
-    const userId = "demo-user-id";
-    // Commented out auth check:
-    // const session = await getServerSession(authOptions);
-    // const userId = (session as any)?.user?.id;
-    // if (!userId) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // Get Firebase user ID from token
+    const userId = await getAuthenticatedUserId(req);
 
     const { searchParams } = new URL(req.url);
     const month = searchParams.get("month");
@@ -52,10 +45,17 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error("GET /api/transactions error:", err);
     const msg = String(err?.message || err);
+    
+    // If auth failed, return 401
+    if (msg.includes("Unauthorized") || msg.includes("token")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
     // If Prisma can't reach the DB (development offline), return empty list so UI remains usable
     if (msg.includes("Can't reach database server") || msg.includes('PrismaClientInitializationError')) {
       return NextResponse.json([], { status: 200 });
     }
+    
     return NextResponse.json(
       { error: "Failed to fetch transactions" },
       { status: 500 }
@@ -67,17 +67,9 @@ export async function POST(req: NextRequest) {
   try {
     console.log('[POST /api/transactions] Request received');
     
-    // Auth disabled - using dummy userId for now
-    const userId = "demo-user-id";
-    console.log('[POST] Session: valid (demo user)');
-    // Commented out auth check:
-    // const session = await getServerSession(authOptions);
-    // const userId = (session as any)?.user?.id;
-    // console.log('[POST] Session:', userId ? 'valid' : 'missing');
-    // if (!userId) {
-    //   console.log('[POST] No session/user ID, returning 401');
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // Get Firebase user ID from token
+    const userId = await getAuthenticatedUserId(req);
+    console.log('[POST] Firebase user:', userId);
 
     const body = await req.json();
     console.log('[POST] Request body:', JSON.stringify(body, null, 2));

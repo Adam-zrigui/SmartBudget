@@ -5,6 +5,7 @@ import { translations } from "@/lib/translations";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
   
   const language = useLanguageStore((s) => s.language);
   const t = translations[language];
+  const { user, loading } = useAuth();
   const { toast } = useToast();
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -173,12 +175,18 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
             </svg>
             {language === 'de' ? 'Neue Buchung' : 'New Entry'}
           </Link>
-          {/* profile link */}
-          <Link href="/profile" className="btn btn-ghost btn-circle avatar p-0">
-            <div className="w-8 h-8 rounded-full overflow-hidden">
-              <img src="/avatar.png" alt="User" loading="lazy" className="object-cover w-full h-full" />
-            </div>
-          </Link>
+          {/* auth actions */}
+          {!loading && user ? (
+            <Link href="/profile" className="btn btn-ghost btn-circle avatar p-0" suppressHydrationWarning>
+              <div className="w-8 h-8 rounded-full overflow-hidden">
+                <img src={user.photoURL || '/avatar.png'} alt={user.displayName ?? 'User'} loading="lazy" className="object-cover w-full h-full" />
+              </div>
+            </Link>
+          ) : (
+            <Link href="/auth/signin" className="btn btn-ghost btn-sm text-xs">
+              {language === 'de' ? 'Anmelden' : 'Sign In'}
+            </Link>
+          )}
         </div>
       </div>
     </header>

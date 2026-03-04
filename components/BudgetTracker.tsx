@@ -26,12 +26,13 @@ import Analytics from "./Analytics";
 import Tax from "./Tax";
 import SalaryPlanner from "./SalaryPlanner";
 import Advisor from "./Advisor";
+import Profile from "./Profile";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import FormModal from "./FormModal";
 import DeleteModal from "./DeleteModal";
 import Toast from "./Toast";
 
-export default function BudgetTracker() {
+export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab?: string }) {
   // Prefetch all API data in the background for faster page switches
   usePrefetch();
   
@@ -40,7 +41,7 @@ export default function BudgetTracker() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === 'dark';
-  const [tab, setTab] = useState("dashboard");
+  const [tab, setTab] = useState(initialTab);
   // stable id for popover content to prevent hydration mismatches
   const popoverId = useId();
 
@@ -381,6 +382,10 @@ export default function BudgetTracker() {
               ) : tab === "advisor" ? (
                 <div className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <Advisor />
+                </div>
+              ) : tab === "profile" ? (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <Profile setTab={setTab} />
                 </div>
               ) : (
                 <>

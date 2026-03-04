@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/lib/auth";
+import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { NextRequest, NextResponse } from "next/server";
 
 // Mutation endpoints - keep dynamic, no caching
@@ -11,14 +10,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Auth disabled - using dummy userId for now
-    const userId = "demo-user-id";
-    // Commented out auth check:
-    // const session = await getServerSession(authOptions);
-    // const userId = (session as any)?.user?.id;
-    // if (!userId) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // Get Firebase user ID from token
+    const userId = await getAuthenticatedUserId(req);
 
     const { id } = params;
     const body = await req.json();
@@ -65,19 +58,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
     try {
-    // Auth disabled - using dummy userId for now
-    const userId = "demo-user-id";
-    // Commented out auth check:
-    // const session = await getServerSession(authOptions);
-    // const userId = (session as any)?.user?.id;
-    // if (!userId) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
-
-    const { id } = params;
-
-    // Verify user owns this transaction
-    const existing = await prisma.transaction.findUnique({ where: { id } });
+    // Get Firebase user ID from token
+    const userId = await getAuthenticatedUserId(req);
     if (!existing || existing.userId !== userId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
