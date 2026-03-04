@@ -9,7 +9,6 @@ export function middleware(req: NextRequest) {
 
   // public or static resources skip auth check
   if (
-    pathname === '/' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
     pathname === '/favicon.ico' ||
