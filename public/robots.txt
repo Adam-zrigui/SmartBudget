@@ -1,5 +1,25 @@
+# SmartBudget SEO Configuration
+# Allow search engines to crawl public content
+
 User-agent: *
+Allow: /
 Disallow: /profile/
 Disallow: /auth/
 Disallow: /api/
-Sitemap: https://yourdomain.com/sitemap.xml
+Disallow: /.next/
+Disallow: /node_modules/
+Crawl-delay: 1
+User-agent: Googlebot
+Crawl-delay: 0
+
+# Sitemaps
+Sitemap: https://smartbudget.app/sitemap.xml
+Sitemap: https://smartbudget.app/sitemap-index.xml
+
+# Common bot rules
+User-agent: AdsBot-Google
+Allow: /
+User-agent: Mediapartners-Google
+Allow: /
+User-agent: MJ12bot
+Crawl-delay: 1

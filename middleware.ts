@@ -11,6 +11,7 @@ export function middleware(req: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/public') ||
+    pathname.startsWith('/api/auth') ||
     pathname === '/favicon.ico' ||
     pathname.startsWith('/auth/signin') ||
     pathname === '/login' // still allow legacy redirect page
@@ -20,7 +21,11 @@ export function middleware(req: NextRequest) {
 
   const token = req.cookies.get('_auth_token')?.value;
   if (!token) {
-    return NextResponse.redirect(new URL('/auth/signin', req.url));
+    // Pass the original URL as callbackUrl so user returns to intended page after signin
+    const callbackUrl = encodeURIComponent(pathname + req.nextUrl.search);
+    return NextResponse.redirect(
+      new URL(`/auth/signin?callbackUrl=${callbackUrl}`, req.url)
+    );
   }
 
   return NextResponse.next();

@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-03-04T20:28:25.791Z",
+  "chunks": {
+    "955da091695b0cae.js": {
+      "size": 475290,
+      "sizeKB": 464.15
+    },
+    "eeeb5e097f8733c5.js": {
+      "size": 384080,
+      "sizeKB": 375.08
+    },
+    "bdc603264c27151c.js": {
+      "size": 224630,
+      "sizeKB": 219.37
+    },
+    "a6dad97d9634a72d.js": {
+      "size": 112594,
+      "sizeKB": 109.96
+    },
+    "5b41a9a151eade24.js": {
+      "size": 111370,
+      "sizeKB": 108.76
+    },
+    "c218c0a728e5712a.js": {
+      "size": 93873,
+      "sizeKB": 91.67
+    },
+    "e5f7bc6e2d303657.js": {
+      "size": 93873,
+      "sizeKB": 91.67
+    },
+    "19a82cc02e502947.js": {
+      "size": 74020,
+      "sizeKB": 72.29
+    },
+    "3cacffceeb34328a.js": {
+      "size": 42025,
+      "sizeKB": 41.04
+    },
+    "7e70de155c82886c.js": {
+      "size": 39187,
+      "sizeKB": 38.27
+    },
+    "b2218f32c1b1e00a.js": {
+      "size": 39187,
+      "sizeKB": 38.27
+    },
+    "1852192844579a1a.js": {
+      "size": 33297,
+      "sizeKB": 32.52
+    },
+    "03e2f7dd0ea32b0f.js": {
+      "size": 30679,
+      "sizeKB": 29.96
+    },
+    "4a45f8d06b4b3f0f.js": {
+      "size": 29481,
+      "sizeKB": 28.79
+    },
+    "0f14b5c184cdc808.js": {
+      "size": 29114,
+      "sizeKB": 28.43
+    },
+    "3d72217f405df308.js": {
+      "size": 27319,
+      "sizeKB": 26.68
+    },
+    "dd88901e93dc95ea.js": {
+      "size": 27020,
+      "sizeKB": 26.39
+    },
+    "a13d91a1d67ac595.js": {
+      "size": 24578,
+      "sizeKB": 24
+    },
+    "711cd84536b71682.js": {
+      "size": 24278,
+      "sizeKB": 23.71
+    },
+    "55016fb85e4b69d6.js": {
+      "size": 19717,
+      "sizeKB": 19.25
+    }
+  },
+  "totalSize": "1890.25 KB"
+}
