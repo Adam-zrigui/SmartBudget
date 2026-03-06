@@ -78,30 +78,30 @@ export default function Sidebar({
   }, [txsLength, taxResult]);
 
   return (
-    <aside className="w-[80vw] max-w-xs sm:w-56 lg:w-64 bg-sidebar border-r border-sidebar-border flex flex-col h-screen overflow-y-auto sticky top-0 shadow-lg relative scrollbar-thin scrollbar-thumb-base-300 dark:scrollbar-thumb-base-700">
+    <aside className="w-full max-w-sm bg-sidebar border-r border-sidebar-border flex flex-col h-screen overflow-y-auto sticky top-0 shadow-lg relative scrollbar-thin scrollbar-thumb-base-300 dark:scrollbar-thumb-base-700">
       {/* close button for mobile drawer */}
-      <div className="lg:hidden absolute top-2 right-2">
-        <label htmlFor="sidebar-toggle" className="btn btn-ghost btn-sm btn-square">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="lg:hidden absolute top-3 right-3 z-10">
+        <label htmlFor="sidebar-toggle" className="btn btn-ghost btn-sm btn-square hover:bg-base-200/50 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px]">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </label>
       </div>
       {/* Brand */}
-      <div className="px-6 pt-8 pb-6 border-b border-sidebar-border">
+      <div className="px-4 sm:px-6 pt-6 sm:pt-8 pb-4 sm:pb-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary dark:bg-white flex items-center justify-center text-primary-content dark:text-black font-bold text-sm">
+          <div className="w-8 h-8 rounded-lg bg-primary dark:bg-white flex items-center justify-center text-primary-content dark:text-black font-bold text-sm flex-shrink-0">
             H
           </div>
-          <div>
-            <div className="font-bold text-base tracking-tight text-base-content dark:text-base-100">{t.sidebar.brand}</div>
-            <div className="text-xs opacity-40 dark:opacity-60 text-base-content dark:text-base-300">{t.sidebar.subtitle}</div>
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-sm sm:text-base tracking-tight text-base-content dark:text-base-100 truncate">{t.sidebar.brand}</div>
+            <div className="text-xs opacity-40 dark:opacity-60 text-base-content dark:text-base-300 truncate">{t.sidebar.subtitle}</div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 sm:py-5 space-y-1 overflow-y-auto">
         {TABS.map((tabItem) => {
           const tabLabel = translations[language].sidebar.tabs[tabItem.id]?.label || tabItem.id;
           const tabHint = translations[language].sidebar.tabs[tabItem.id]?.hint || '';
@@ -113,7 +113,7 @@ export default function Sidebar({
           // Check if current route matches tab
           const isActive = tabItem.id === 'dashboard' ? pathname === '/' : pathname === `/${tabItem.id}`;
           
-          const navClasses = `w-full flex items-center gap-3 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-left transition-all duration-300 group transform hover:scale-102 hover:pl-5 focus:outline-none focus-visible:ring focus-visible:ring-primary/50
+          const navClasses = `w-full flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3 rounded-xl text-left transition-all duration-300 group transform hover:scale-[1.02] focus:outline-none focus-visible:ring focus-visible:ring-primary/50 min-h-[48px]
             ${isActive
               ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-4 border-primary pl-3 shadow-sm"
               : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-70 group-hover:opacity-100"
@@ -121,8 +121,8 @@ export default function Sidebar({
           
           const navContent = (
             <>
-              <span className={`transition-opacity ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
-                <SVG d={tabItem.ic} size={16} />
+              <span className={`transition-opacity flex-shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
+                <SVG d={tabItem.ic} size={18} />
               </span>
               <div className="flex-1 min-w-0">
                 <div className={`text-sm font-medium ${isActive ? "font-semibold" : "opacity-80"}`}>{tabLabel}</div>
@@ -162,7 +162,7 @@ export default function Sidebar({
 
       {/* Legal & Features Section */}
       <div className="px-3 pb-3 border-t border-base-300 dark:border-base-700">
-        <div className="pt-4 pb-2">
+        <div className="pt-3 pb-2">
           <div className="text-xs opacity-40 dark:opacity-60 uppercase tracking-wider font-medium px-1">
             {language === 'de' ? 'Rechtliches & Features' : 'Legal & Features'}
           </div>
@@ -189,7 +189,7 @@ export default function Sidebar({
             }
           ].map((item) => {
             const isActive = pathname === item.href;
-            const navClasses = `w-full flex items-center gap-3 px-4 py-2.5 sm:px-3 sm:py-2 rounded-lg text-left transition-all duration-300 group transform hover:scale-102 hover:pl-4
+            const navClasses = `w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-lg text-left transition-all duration-300 group transform hover:scale-[1.02] min-h-[44px]
               ${isActive
                 ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-3 border-primary pl-3 shadow-sm"
                 : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-60 group-hover:opacity-100"
@@ -202,7 +202,7 @@ export default function Sidebar({
                 className={navClasses}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <span className={`text-lg transition-opacity ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
+                <span className={`text-base sm:text-lg transition-opacity flex-shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
                   {item.icon}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -223,14 +223,14 @@ export default function Sidebar({
       </div>
 
       {/* Controls */}
-      <div className="px-3 pb-5 space-y-2">
+      <div className="px-3 pb-4 sm:pb-5 space-y-3">
         {/* Language selector */}
         <div className="flex gap-1 rounded-lg overflow-hidden border border-base-300 dark:border-base-600">
           {(['de', 'en'] as const).map((lang) => (
             <button
               key={lang}
               onClick={() => setLanguage(lang)}
-              className={`flex-1 py-2 text-xs font-medium transition-all duration-200 ${
+              className={`flex-1 py-2.5 text-xs font-medium transition-all duration-200 min-h-[44px] ${
                 language === lang
                   ? 'bg-primary dark:bg-secondary text-primary-content dark:text-secondary-content'
                   : 'bg-base-100 dark:bg-base-700 hover:bg-base-200 dark:hover:bg-base-600 opacity-60 hover:opacity-100 text-base-content dark:text-base-100'
@@ -242,16 +242,16 @@ export default function Sidebar({
           ))}
         </div>
 
-        {/* Theme only */}
-        <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        <div className="flex items-center justify-start">
           {mounted && (
             <button
-              className="btn btn-ghost btn-sm btn-square hover:scale-110 active:scale-95 transition-all duration-300 transform dark:hover:bg-base-700"
+              className="btn btn-ghost btn-sm btn-square hover:scale-110 active:scale-95 transition-all duration-300 transform dark:hover:bg-base-700 min-h-[44px] min-w-[44px]"
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
               title={isDark ? t.header.lightMode : t.header.darkMode}
             >
               <div className={`transition-transform duration-300 ${isDark ? 'rotate-0' : 'rotate-180'}`}>
-                <SVG d={isDark ? IC.sun : IC.moon} size={16} />
+                <SVG d={isDark ? IC.sun : IC.moon} size={18} />
               </div>
             </button>
           )}

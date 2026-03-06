@@ -52,8 +52,8 @@ export default function AppShell({
           exportCSV={exportCSV}
           onHamburger={() => setDrawerOpen((o) => !o)}
         />
-        <main className="flex-1 overflow-y-auto p-5 lg:p-8 bg-base-100 transition-colors duration-200">
-          <div className="ui-container mx-auto w-full animate-in fade-in slide-in-from-bottom-2">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-8 bg-base-100 transition-colors duration-200">
+          <div className="ui-container mx-auto w-full max-w-none lg:max-w-7xl animate-in fade-in slide-in-from-bottom-2">
             {children}
           </div>
         </main>

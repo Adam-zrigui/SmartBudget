@@ -97,46 +97,53 @@ export default function Dashboard({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Filter bar */}
-      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
-        <select
-          className="select select-bordered select-sm w-40 text-sm"
-          value={fMonth}
-          onChange={(e) => setFMonth(e.target.value)}
-        >
-          <option value="all">Alle Monate</option>
-          {MONTHS_DE.map((m, i) => (
-            <option key={m} value={i}>{m} 2026</option>
-          ))}
-        </select>
-
-        <div className="flex rounded-lg overflow-hidden border border-base-300">
-          {[
-            { v: 'all', l: language === 'de' ? 'Alle' : 'All' },
-            { v: 'income', l: language === 'de' ? 'Einnahmen' : 'Income' },
-            { v: 'expense', l: language === 'de' ? 'Ausgaben' : 'Expenses' },
-          ].map((t) => (
-            <button
-              key={t.v}
-              className={`px-3 py-1.5 text-xs font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
-                fType === t.v
-                  ? 'bg-primary text-primary-content shadow-md'
-                  : 'bg-base-100 hover:bg-base-200 opacity-60 hover:opacity-100'
-              }`}
-              onClick={() => setFType(t.v)}
+    <div className="space-y-4 sm:space-y-6">
+      {/* Filter bar - Mobile optimized */}
+      <div className="card bg-base-100 border border-base-200 shadow-sm p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <select
+              className="select select-bordered select-sm w-full sm:w-40 text-sm focus:ring-2 focus:ring-primary/50 transition-all duration-200"
+              value={fMonth}
+              onChange={(e) => setFMonth(e.target.value)}
             >
-              {t.l}
-            </button>
-          ))}
-        </div>
+              <option value="all">{language === 'de' ? 'Alle Monate' : 'All Months'}</option>
+              {MONTHS_DE.map((m, i) => (
+                <option key={m} value={i}>{m} 2026</option>
+              ))}
+            </select>
 
-        <span className="ml-auto text-xs opacity-30 font-medium uppercase tracking-wider">
-          {filtered.length} {language === 'de' ? 'Einträge' : 'Entries'}
-        </span>
+            <div className="flex rounded-lg overflow-hidden border border-base-300 w-full sm:w-auto">
+              {[
+                { v: 'all', l: language === 'de' ? 'Alle' : 'All' },
+                { v: 'income', l: language === 'de' ? 'Einnahmen' : 'Income' },
+                { v: 'expense', l: language === 'de' ? 'Ausgaben' : 'Expenses' },
+              ].map((t) => (
+                <button
+                  key={t.v}
+                  className={`flex-1 sm:px-3 px-2 py-2 text-xs font-medium transition-all duration-200 ${
+                    fType === t.v
+                      ? 'bg-primary text-primary-content dark:bg-secondary dark:text-secondary-content shadow-md'
+                      : 'bg-base-100 hover:bg-base-200 opacity-60 hover:opacity-100'
+                  }`}
+                  onClick={() => setFType(t.v)}
+                >
+                  {t.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center text-xs opacity-60 font-medium">
+            <span>{filtered.length} {language === 'de' ? 'Einträge' : 'Entries'}</span>
+            <span className="text-xs opacity-40 uppercase tracking-wider">
+              {language === 'de' ? 'Übersicht' : 'Overview'}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - Better mobile layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 animate-children">
         <div className="animate-stagger-1">
           <KpiCard
@@ -156,7 +163,7 @@ export default function Dashboard({
             progressColor="bg-error"
           />
         </div>
-        <div className="animate-stagger-3">
+        <div className="animate-stagger-3 sm:col-span-2 lg:col-span-1">
           <KpiCard
             label={language === 'de' ? 'Sparquote' : 'Savings Rate'}
             value={`${svRate}%`}
@@ -168,13 +175,13 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* Charts row */}
+      {/* Charts row - Mobile stacked */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 animate-children">
         {/* Area chart */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
-          <div className="flex items-center justify-between mb-5">
+        <div className="card bg-base-100 shadow-sm border border-base-200 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
             <div className="text-sm font-semibold">{language === 'de' ? 'Monatsverlauf' : 'Monthly Overview'}</div>
-            <div className="flex items-center gap-3 text-xs opacity-40">
+            <div className="hidden sm:flex items-center gap-3 text-xs opacity-40">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-success inline-block animate-pulse" />
                 {language === 'de' ? 'Einnahmen' : 'Income'}
@@ -189,10 +196,10 @@ export default function Dashboard({
         </div>
 
         {/* Category list */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
+        <div className="card bg-base-100 shadow-sm border border-base-200 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
           <div className="text-sm font-semibold mb-4">{language === 'de' ? 'Top Ausgaben' : 'Top Expenses'}</div>
           {byCat.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-40 opacity-30 text-sm">
+            <div className="flex flex-col items-center justify-center h-32 sm:h-40 opacity-30 text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>

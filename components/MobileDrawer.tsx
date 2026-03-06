@@ -30,11 +30,11 @@ export default function MobileDrawer({
 
       {/* sliding panel */}
       <div
-        className={`absolute left-0 top-0 h-full bg-sidebar w-full sm:w-[80vw] sm:max-w-xs transform transition-transform shadow-lg
+        className={`absolute left-0 top-0 h-full bg-sidebar w-[85vw] max-w-sm transform transition-transform shadow-xl border-r border-sidebar-border
           ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <button
-          className="absolute top-2 right-2 btn btn-ghost btn-sm btn-square"
+          className="absolute top-3 right-3 btn btn-ghost btn-sm btn-square hover:bg-base-200/50 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px]"
           onClick={onClose}
           aria-label="Close sidebar"
         >

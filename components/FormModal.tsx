@@ -41,21 +41,21 @@ export default function FormModal({
   const cats = CATEGORIES.filter((ct) => ct.type === form.type);
 
   return (
-    <div className="modal modal-open\">
+    <div className="modal modal-open">
       <div
-        className="modal-box w-11/12 max-w-md sm:max-w-lg bg-base-100 rounded-2xl shadow-2xl border border-base-200 p-0 overflow-hidden\"
+        className="modal-box w-11/12 max-w-md sm:max-w-lg bg-base-100 rounded-2xl shadow-2xl border border-base-200 p-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-base-200 flex items-start justify-between">
-          <div>
-            <h3 className="text-base font-bold tracking-tight">
+        {/* Header - Mobile optimized */}
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-base-200 flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm sm:text-base font-bold tracking-tight">
               {editId ? t.form.create : t.form.newEntry}
             </h3>
             <p className="text-xs opacity-40 mt-0.5">{t.form.fillAllFields}</p>
           </div>
           <button
-            className="btn btn-ghost btn-sm btn-square -mr-1 -mt-1"
+            className="btn btn-ghost btn-sm btn-square -mr-1 -mt-1 flex-shrink-0"
             onClick={() => setShowForm(false)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,19 +64,19 @@ export default function FormModal({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
-          {/* Type toggle */}
+        <div className="px-4 sm:px-6 py-4 sm:py-5 space-y-4 sm:space-y-4">
+          {/* Type toggle - Better mobile layout */}
           <div className="flex rounded-xl overflow-hidden border border-base-300 p-1 bg-base-200">
             {[{ key: 'expense', label: t.form.expense }, { key: 'income', label: t.form.income }].map((opt) => (
               <button
                 key={opt.key}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all duration-150
-                  ${form.type === opt.key
+                className={`flex-1 py-2.5 sm:py-2 text-sm font-semibold rounded-lg transition-all duration-150 ${
+                  form.type === opt.key
                     ? opt.key === 'expense'
                       ? 'bg-error text-error-content shadow-sm'
                       : 'bg-success text-success-content shadow-sm'
                     : 'opacity-40 hover:opacity-60'
-                  }`}
+                }`}
                 onClick={() =>
                   setForm((f: any) => ({
                     ...f,
@@ -90,21 +90,24 @@ export default function FormModal({
             ))}
           </div>
 
-          {/* Amount */}
+          {/* Amount - Larger on mobile for easier input */}
           <div>
-            <label className="text-xs font-medium opacity-50 uppercase tracking-wider">{t.form.amount} ({cur})</label>
-            <div className="relative mt-1.5">
+            <label className="text-xs font-medium opacity-50 uppercase tracking-wider block mb-2">
+              {t.form.amount} ({cur})
+            </label>
+            <div className="relative">
               <input
-                className="input input-bordered w-full text-xl font-bold tabular-nums pr-12"
+                className="input input-bordered w-full text-lg sm:text-xl font-bold tabular-nums pr-12 py-3 sm:py-2"
                 type="number"
                 step="0.01"
-                min="0"
-                placeholder={language === 'de' ? '0,00' : '0.00'}
+                placeholder="0.00"
                 value={form.amount}
                 onChange={(e) => setForm((f: any) => ({ ...f, amount: e.target.value }))}
                 autoFocus
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm opacity-30 font-medium">{cur}</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm opacity-40 font-medium">
+                {cur}
+              </span>
             </div>
           </div>
 

@@ -102,12 +102,12 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl transition-all duration-300" style={{ boxShadow: 'var(--shadow-sm)' }}>
-      <div className="flex items-center h-16 ui-container mx-auto px-6 gap-4 text-base-content dark:text-base-100">
+      <div className="flex items-center h-14 sm:h-16 ui-container mx-auto px-4 sm:px-6 gap-3 sm:gap-4 text-base-content dark:text-base-100">
         {/* Mobile hamburger */}
         {showHamburger && (
           <button
             onClick={() => onHamburger ? onHamburger() : undefined}
-            className="btn btn-ghost btn-sm btn-square lg:hidden"
+            className="btn btn-ghost btn-sm btn-square lg:hidden p-2"
             aria-label="Menü öffnen"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,23 +116,29 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
           </button>
         )}
 
-        {/* Title block */}
+        {/* Title block - More compact on mobile */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-bold tracking-tight leading-none">{current.label}</h1>
-          <p className="text-xs opacity-40 mt-0.5 truncate">{current.description}</p>
+          <h1 className="text-sm sm:text-base font-bold tracking-tight leading-none truncate">{current.label}</h1>
+          <p className="text-xs opacity-40 mt-0.5 truncate hidden sm:block">{current.description}</p>
         </div>
 
-        {/* Pill badge */}
+        {/* Mobile transaction count */}
+        <div className="flex sm:hidden items-center gap-1 px-2 py-1 bg-base-200 rounded-full text-xs opacity-60 font-medium">
+          <span className="w-1 h-1 rounded-full bg-success inline-block animate-pulse" />
+          {txsLength}
+        </div>
+
+        {/* Desktop Pill badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-base-200 rounded-full text-xs opacity-60 font-medium hover:opacity-80 hover:shadow-md transition-all duration-200">
           <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
           {txsLength} {language === 'de' ? 'Buchungen' : 'Entries'} · {language === 'de' ? 'Feb 2026' : 'Feb 2026'}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
+        {/* Actions - Better mobile spacing */}
+        <div className="flex items-center gap-1 sm:gap-2">
             <Link
             href="/advisor"
-            className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-primary/10 transition-all duration-300 transform"
+            className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-primary/10 transition-all duration-300 transform p-2"
             title={language === 'de' ? 'AI Berater' : 'AI Advisor'}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -141,7 +147,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
           </Link>
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-base-200/50 transition-all duration-300 transform"
+            className="btn btn-ghost btn-sm btn-square hover:scale-110 hover:bg-base-200/50 transition-all duration-300 transform p-2"
             title={isDark ? t.header.lightMode : t.header.darkMode}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-300 ${isDark ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
