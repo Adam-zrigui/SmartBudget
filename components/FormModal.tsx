@@ -41,9 +41,9 @@ export default function FormModal({
   const cats = CATEGORIES.filter((ct) => ct.type === form.type);
 
   return (
-    <div className="modal modal-open">
+    <div className="modal modal-open\">
       <div
-        className="modal-box max-w-md bg-base-100 rounded-2xl shadow-2xl border border-base-200 p-0 overflow-hidden"
+        className="modal-box w-11/12 max-w-md sm:max-w-lg bg-base-100 rounded-2xl shadow-2xl border border-base-200 p-0 overflow-hidden\"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

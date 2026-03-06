@@ -156,7 +156,165 @@ export const SEED = [
   },
 ];
 
-// German Tax Configuration
+// German Payment Methods
+export const GERMAN_PAYMENT_METHODS = [
+  {
+    id: 'sepa',
+    name: 'SEPA-Überweisung',
+    nameEn: 'SEPA Transfer',
+    icon: '💳',
+    description: 'Standard für Euro-Zahlungen in Europa',
+    descriptionEn: 'Standard for Euro payments in Europe',
+    fees: '0,00 € (innerhalb EU)',
+    feesEn: '€0.00 (within EU)',
+    processingTime: '1-3 Werktage',
+    processingTimeEn: '1-3 business days',
+    maxAmount: 'unbegrenzt',
+    maxAmountEn: 'unlimited'
+  },
+  {
+    id: 'instant-sepa',
+    name: 'Instant SEPA',
+    nameEn: 'Instant SEPA',
+    icon: '⚡',
+    description: 'Sofortige Überweisungen in Echtzeit',
+    descriptionEn: 'Instant real-time transfers',
+    fees: '0,10-0,50 €',
+    feesEn: '€0.10-0.50',
+    processingTime: 'Sekunden',
+    processingTimeEn: 'Seconds',
+    maxAmount: '100.000 €',
+    maxAmountEn: '€100,000'
+  },
+  {
+    id: 'giropay',
+    name: 'Giropay',
+    nameEn: 'Giropay',
+    icon: '🏦',
+    description: 'Direkte Bank-zu-Bank Zahlungen',
+    descriptionEn: 'Direct bank-to-bank payments',
+    fees: '0,00-0,35 €',
+    feesEn: '€0.00-0.35',
+    processingTime: 'Sofort',
+    processingTimeEn: 'Instant',
+    maxAmount: '5.000 €',
+    maxAmountEn: '€5,000'
+  },
+  {
+    id: 'sofort',
+    name: 'Sofortüberweisung',
+    nameEn: 'Sofort',
+    icon: '🔄',
+    description: 'Sofortige Online-Überweisungen',
+    descriptionEn: 'Instant online transfers',
+    fees: '0,00-0,99 €',
+    feesEn: '€0.00-0.99',
+    processingTime: 'Sofort',
+    processingTimeEn: 'Instant',
+    maxAmount: '5.000 €',
+    maxAmountEn: '€5,000'
+  },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    nameEn: 'PayPal',
+    icon: '🅿️',
+    description: 'Internationale Zahlungen mit PayPal',
+    descriptionEn: 'International payments with PayPal',
+    fees: '2,9% + 0,35 €',
+    feesEn: '2.9% + €0.35',
+    processingTime: 'Sofort',
+    processingTimeEn: 'Instant',
+    maxAmount: 'unbegrenzt',
+    maxAmountEn: 'unlimited'
+  }
+];
+
+// German Tax Deductions and Benefits
+export const GERMAN_TAX_DEDUCTIONS = [
+  {
+    id: 'werbungskosten',
+    name: 'Werbungskosten',
+    nameEn: 'Business Expenses',
+    description: 'Kosten für berufliche Tätigkeit',
+    descriptionEn: 'Costs for professional activities',
+    maxAmount: 1200,
+    maxAmountEn: '€1,200 (or actual costs)',
+    examples: ['Fahrtkosten', 'Arbeitszimmer', 'Fortbildung'],
+    examplesEn: ['Travel costs', 'Home office', 'Training']
+  },
+  {
+    id: 'sonderausgaben',
+    name: 'Sonderausgaben',
+    nameEn: 'Special Expenses',
+    description: 'Steuerlich begünstigte Ausgaben',
+    descriptionEn: 'Tax-privileged expenses',
+    maxAmount: 'unbegrenzt',
+    maxAmountEn: 'unlimited',
+    examples: ['Kirchensteuer', 'Spenden', 'Beerdigungskosten'],
+    examplesEn: ['Church tax', 'Donations', 'Funeral costs']
+  },
+  {
+    id: 'außergewöhnliche-belastungen',
+    name: 'Außergewöhnliche Belastungen',
+    nameEn: 'Extraordinary Expenses',
+    description: 'Unvorhersehbare hohe Ausgaben',
+    descriptionEn: 'Unforeseeable high expenses',
+    threshold: '1% des Einkommens',
+    thresholdEn: '1% of income',
+    examples: ['Krankheitskosten', 'Scheidungskosten', 'Naturkatastrophen'],
+    examplesEn: ['Medical costs', 'Divorce costs', 'Natural disasters']
+  },
+  {
+    id: 'kinderfreibetrag',
+    name: 'Kinderfreibetrag',
+    nameEn: 'Child Allowance',
+    description: 'Steuerliche Berücksichtigung von Kindern',
+    descriptionEn: 'Tax consideration of children',
+    amount: 8388,
+    amountEn: '€8,388 per child (2024)',
+    alternative: 'Kindergeld',
+    alternativeEn: 'Child benefit'
+  }
+];
+
+// German Social Benefits
+export const GERMAN_SOCIAL_BENEFITS = [
+  {
+    id: 'kindergeld',
+    name: 'Kindergeld',
+    nameEn: 'Child Benefit',
+    description: 'Monatliche Zahlung für jedes Kind',
+    descriptionEn: 'Monthly payment for each child',
+    amount: '250 € (1.-2. Kind), 251 € (3. Kind), 298 € (ab 4. Kind)',
+    amountEn: '€250 (1st-2nd child), €251 (3rd child), €298 (4th+ child)',
+    duration: 'Bis 18 Jahre (länger bei Ausbildung)',
+    durationEn: 'Until 18 years (longer with education)'
+  },
+  {
+    id: 'wohngeld',
+    name: 'Wohngeld',
+    nameEn: 'Housing Benefit',
+    description: 'Zuschuss für Wohnkosten',
+    descriptionEn: 'Subsidy for housing costs',
+    depends: 'Einkommen, Haushaltsgröße, Miete',
+    dependsEn: 'Income, household size, rent',
+    maxAmount: 'unbegrenzt',
+    maxAmountEn: 'unlimited'
+  },
+  {
+    id: 'bafoeg',
+    name: 'BAföG',
+    nameEn: 'Federal Training Assistance Act',
+    description: 'Förderung für Studium/Ausbildung',
+    descriptionEn: 'Support for studies/training',
+    maxAmount: '934 € (Wohngemeinschaft)',
+    maxAmountEn: '€934 (shared accommodation)',
+    repayment: 'Ab 10.000 € Jahreseinkommen',
+    repaymentEn: 'From €10,000 annual income'
+  }
+];
+
 export const DE_TAX_CLASSES = [
   { id: 1, label: 'I - Ledig/Lediger' },
   { id: 2, label: 'II - Alleinerziehend' },

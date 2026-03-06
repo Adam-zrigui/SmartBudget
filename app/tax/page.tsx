@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useId } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import MobileDrawer from '@/components/MobileDrawer';
 import Tax from '@/components/Tax';
 import Advisor from '@/components/Advisor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -45,6 +47,7 @@ export default function TaxPage() {
   const language = useLanguageStore((s) => s.language);
 
   const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const popoverId = useId();
@@ -94,20 +97,26 @@ export default function TaxPage() {
   return (
     <div>
       <div className="flex min-h-screen bg-base-100 text-base-content">
+        <MobileDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          taxResult={taxResult}
+          txsLength={0}
+          tab="tax"
+          setTab={() => {}}
+        />
+
         <div className="hidden lg:flex lg:shrink-0">
           <Sidebar taxResult={taxResult} txsLength={0} tab="tax" setTab={() => {}} />
         </div>
 
-        <div className="drawer lg:hidden">
-          <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-side z-50">
-            <label htmlFor="sidebar-toggle" className="drawer-overlay lg:hidden" />
-            <Sidebar taxResult={taxResult} txsLength={0} tab="tax" setTab={() => {}} />
-          </div>
-        </div>
-
         <div className="flex flex-col flex-1 min-w-0">
-          <Header tab="tax" txsLength={0} exportCSV={() => {}} />
+          <Header
+            tab="tax"
+            txsLength={0}
+            exportCSV={() => {}}
+            onHamburger={() => setDrawerOpen(o => !o)}
+          />
           <main className="flex-1 overflow-y-auto p-5 lg:p-8 bg-base-100">
             <div className="max-w-6xl mx-auto">
               {isLoading ? (

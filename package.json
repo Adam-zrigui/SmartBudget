@@ -2,6 +2,7 @@
   "name": "smartbudget",
   "version": "0.1.0",
   "description": "AI-powered personal finance management platform",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",

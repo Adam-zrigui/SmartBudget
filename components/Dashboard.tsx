@@ -36,11 +36,11 @@ const KpiCard = ({
   progressColor: string;
   accent?: boolean;
 }) => (
-  <div className={`card bg-base-100 shadow-sm border border-base-200 p-5 hover:shadow-lg hover:scale-105 hover:-translate-y-1 transition-all duration-300 ease-out ${accent ? 'ring-1 ring-primary/20' : ''} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
-    <div className="flex items-start justify-between mb-3">
-      <span className="text-xs font-medium uppercase tracking-widest opacity-40">{label}</span>
+  <div className={`card bg-card border border-border p-4 sm:p-6 hover:shadow-lg hover:border-primary/20 transition-all duration-300 ${accent ? 'ring-1 ring-primary/20 ring-offset-0' : ''} animate-in fade-in slide-in-from-bottom-4 duration-500`} style={{ boxShadow: 'var(--shadow-md)' }}>
+    <div className="flex items-start justify-between mb-4 pb-3 border-b border-border">
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
     </div>
-    <div className="text-2xl font-bold tracking-tight mb-4">{value}</div>
+    <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-4">{value}</div>
     <div className="w-full h-1 bg-base-200 rounded-full overflow-hidden">
       <div
         className={`h-1 rounded-full transition-all duration-700 ${progressColor}`}
@@ -99,7 +99,7 @@ export default function Dashboard({
   return (
     <div className="space-y-6">
       {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
         <select
           className="select select-bordered select-sm w-40 text-sm"
           value={fMonth}
@@ -137,7 +137,7 @@ export default function Dashboard({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-children">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 animate-children">
         <div className="animate-stagger-1">
           <KpiCard
             label={language === 'de' ? 'Einnahmen' : 'Income'}

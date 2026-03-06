@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     // Verify user owns this transaction
@@ -55,11 +55,16 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     try {
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
+
+    const { id } = await params;
+
+    // Verify user owns this transaction
+    const existing = await prisma.transaction.findUnique({ where: { id } });
     if (!existing || existing.userId !== userId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

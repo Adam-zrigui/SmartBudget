@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { CATEGORIES, IC, fmt, DE_TAX_CLASSES } from '@/lib/utils'
 import Header from '@/components/Header'
 import Sidebar from '@/components/Sidebar'
+import MobileDrawer from '@/components/MobileDrawer'
 import { useLanguageStore } from '@/lib/store'
 import { useTranslations } from '@/lib/translations'
 
@@ -23,6 +25,7 @@ type BundeslandTax = {
 export default function NewEntryPage () {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === 'dark';
 
@@ -236,6 +239,7 @@ export default function NewEntryPage () {
   };
 
   // shared props for header/sidebar (only necessary ones)
+
   const shared = {
     taxResult: defaultTaxResult,
     txsLength: 0,
@@ -246,20 +250,20 @@ export default function NewEntryPage () {
   return (
     <div className={mounted && isDark ? 'dark' : ''} data-theme={mounted ? resolvedTheme : undefined}>
       <div className="flex min-h-screen bg-base-100 text-base-content">
+        <MobileDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          taxResult={defaultTaxResult}
+          txsLength={0}
+          tab="new"
+          setTab={() => {}}
+        />
         <div className="hidden lg:flex lg:shrink-0">
           <Sidebar {...shared} />
         </div>
 
-        <div className="drawer lg:hidden">
-          <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-side z-50">
-            <label htmlFor="sidebar-toggle" className="drawer-overlay lg:hidden" />
-            <Sidebar {...shared} />
-          </div>
-        </div>
-
         <div className="flex flex-col flex-1 min-w-0">
-          <Header {...shared} />
+          <Header {...shared} onHamburger={() => setDrawerOpen(o => !o)} />
           <main className="flex-1 overflow-y-auto p-5 lg:p-7">
             <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* form card */}

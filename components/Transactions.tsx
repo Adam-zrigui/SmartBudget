@@ -46,10 +46,10 @@ export default memo(function Transactions({
   return (
     <div className="space-y-4">
       {/* Filter toolbar */}
-      <div className="card bg-base-100 border border-base-200 shadow-sm p-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="card bg-base-100 border border-base-200 shadow-sm p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2 sm:gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-45">
+          <div className="relative w-full sm:flex-1 sm:min-w-45">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-30"
               xmlns="http://www.w3.org/2000/svg"
@@ -70,7 +70,7 @@ export default memo(function Transactions({
 
           {/* Month */}
           <select
-            className="select select-bordered select-sm w-36 text-sm focus:ring-2 focus:ring-primary/50 transition-all duration-200"
+            className="select select-bordered select-sm w-full sm:w-36 text-sm focus:ring-2 focus:ring-primary/50 transition-all duration-200"
             value={fMonth}
             onChange={(e) => setFMonth(e.target.value)}
           >

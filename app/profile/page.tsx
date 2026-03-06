@@ -1,12 +1,12 @@
 ﻿'use client'
 
 import { useState, useEffect, useId } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import AppShell from '@/components/AppShell';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import Header from '@/components/Header';
 import PageAnimationWrapper from '@/components/PageAnimationWrapper';
-import Sidebar from '@/components/Sidebar';
 import Advisor from '@/components/Advisor';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguageStore } from '@/lib/store';
@@ -23,6 +23,7 @@ export default function ProfileContent() {
   const t = translations[language];
 
   const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [emailInput, setEmailInput] = useState('');
@@ -190,24 +191,8 @@ export default function ProfileContent() {
 
   return (
     <PageAnimationWrapper>
-    <div className="flex min-h-screen bg-base-100 text-base-content">
-      {/* Sidebar */}
-      <div className="hidden lg:flex lg:shrink-0">
-        <Sidebar taxResult={{}} txsLength={0} tab="profile" setTab={() => {}} />
-      </div>
-      <div className="drawer lg:hidden">
-        <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
-        <div className="drawer-side z-50">
-          <label htmlFor="sidebar-toggle" className="drawer-overlay lg:hidden" />
-          <Sidebar taxResult={{}} txsLength={0} tab="profile" setTab={() => {}} />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 min-w-0">
-        <Header tab="profile" txsLength={0} exportCSV={() => {}} />
-        <main className="flex-1 overflow-y-auto p-5 lg:p-8 bg-gradient-to-br from-base-100 via-base-100 to-base-200">
-          <div className="max-w-5xl mx-auto">
+    <AppShell tab="profile" txsLength={0} exportCSV={() => {}} taxResult={{}} setTab={() => {}}>
+      <div className="max-w-5xl mx-auto">
             {/* Profile Header */}
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">
@@ -521,8 +506,8 @@ export default function ProfileContent() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+
+      </AppShell>
 
       {/* AI Advisor */}
       <div className="fixed bottom-6 right-6 z-50">
@@ -548,7 +533,6 @@ export default function ProfileContent() {
           </PopoverContent>
         </Popover>
       </div>
-    </div>
     </PageAnimationWrapper>
   );
 }

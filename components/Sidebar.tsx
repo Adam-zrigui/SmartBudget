@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from "react";
 import { IC, fmt, calcGermanTax } from "@/lib/utils";
 import { SVGIcon as SVG } from "./SVGIcon";
@@ -11,6 +13,7 @@ export interface SidebarProps {
   txsLength: number;
   tab: string;
   setTab: (t: string) => void;
+  onNavigate?: () => void; // callback for mobile to close drawer when navigation occurs
 }
 
 const TABS = [
@@ -29,6 +32,7 @@ export default function Sidebar({
   txsLength,
   tab,
   setTab,
+  onNavigate,
 }: SidebarProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -36,6 +40,7 @@ export default function Sidebar({
   const isDark = mounted && resolvedTheme === 'dark';
   
   const pathname = usePathname();
+
   
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
@@ -73,9 +78,17 @@ export default function Sidebar({
   }, [txsLength, taxResult]);
 
   return (
-    <aside className="w-64 bg-base-200 dark:bg-base-800 flex flex-col h-screen overflow-y-auto border-r border-base-300 dark:border-base-700 sticky top-0">
+    <aside className="w-[80vw] max-w-xs sm:w-56 lg:w-64 bg-sidebar border-r border-sidebar-border flex flex-col h-screen overflow-y-auto sticky top-0 shadow-lg relative scrollbar-thin scrollbar-thumb-base-300 dark:scrollbar-thumb-base-700">
+      {/* close button for mobile drawer */}
+      <div className="lg:hidden absolute top-2 right-2">
+        <label htmlFor="sidebar-toggle" className="btn btn-ghost btn-sm btn-square">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </label>
+      </div>
       {/* Brand */}
-      <div className="px-6 pt-8 pb-6 border-b border-base-300 dark:border-base-700">
+      <div className="px-6 pt-8 pb-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-primary dark:bg-white flex items-center justify-center text-primary-content dark:text-black font-bold text-sm">
             H
@@ -88,7 +101,7 @@ export default function Sidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-1">
+      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
         {TABS.map((tabItem) => {
           const tabLabel = translations[language].sidebar.tabs[tabItem.id]?.label || tabItem.id;
           const tabHint = translations[language].sidebar.tabs[tabItem.id]?.hint || '';
@@ -100,7 +113,7 @@ export default function Sidebar({
           // Check if current route matches tab
           const isActive = tabItem.id === 'dashboard' ? pathname === '/' : pathname === `/${tabItem.id}`;
           
-          const navClasses = `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group transform hover:scale-102 hover:pl-5
+          const navClasses = `w-full flex items-center gap-3 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-left transition-all duration-300 group transform hover:scale-102 hover:pl-5 focus:outline-none focus-visible:ring focus-visible:ring-primary/50
             ${isActive
               ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-4 border-primary pl-3 shadow-sm"
               : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-70 group-hover:opacity-100"
@@ -124,6 +137,8 @@ export default function Sidebar({
                 key={tabItem.id}
                 href={tabItem.id === 'dashboard' ? '/' : `/${tabItem.id}`}
                 className={navClasses}
+                onClick={onNavigate}
+                aria-current={isActive ? 'page' : undefined}
               >
                 {navContent}
               </Link>
@@ -132,7 +147,10 @@ export default function Sidebar({
             return (
               <button
                 key={tabItem.id}
-                onClick={() => setTab(tabItem.id)}
+                onClick={() => {
+                  setTab(tabItem.id);
+                  onNavigate?.();
+                }}
                 className={navClasses}
               >
                 {navContent}
@@ -141,6 +159,61 @@ export default function Sidebar({
           }
         })}
       </nav>
+
+      {/* Legal & Features Section */}
+      <div className="px-3 pb-3 border-t border-base-300 dark:border-base-700">
+        <div className="pt-4 pb-2">
+          <div className="text-xs opacity-40 dark:opacity-60 uppercase tracking-wider font-medium px-1">
+            {language === 'de' ? 'Rechtliches & Features' : 'Legal & Features'}
+          </div>
+        </div>
+        <nav className="space-y-1">
+          {[
+            {
+              href: '/legal/privacy',
+              label: language === 'de' ? 'Datenschutz' : 'Privacy Policy',
+              hint: language === 'de' ? 'GDPR konform' : 'GDPR compliant',
+              icon: '🔒'
+            },
+            {
+              href: '/legal/terms',
+              label: language === 'de' ? 'Nutzungsbedingungen' : 'Terms of Service',
+              hint: language === 'de' ? 'Regeln & Haftung' : 'Rules & liability',
+              icon: '📋'
+            },
+            {
+              href: '/legal/data-processing',
+              label: language === 'de' ? 'Datenverarbeitung' : 'Data Processing',
+              hint: language === 'de' ? 'Wie wir Daten nutzen' : 'How we use data',
+              icon: '📊'
+            }
+          ].map((item) => {
+            const isActive = pathname === item.href;
+            const navClasses = `w-full flex items-center gap-3 px-4 py-2.5 sm:px-3 sm:py-2 rounded-lg text-left transition-all duration-300 group transform hover:scale-102 hover:pl-4
+              ${isActive
+                ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-3 border-primary pl-3 shadow-sm"
+                : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-60 group-hover:opacity-100"
+              }`;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={navClasses}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <span className={`text-lg transition-opacity ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
+                  {item.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium ${isActive ? "font-semibold" : "opacity-80"}`}>{item.label}</div>
+                  <div className={`text-xs truncate ${isActive ? "opacity-60" : "opacity-40"}`}>{item.hint}</div>
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
       {/* Stats strip */}
       <div className="mx-3 mb-3 p-3 bg-base-100 dark:bg-base-700 rounded-xl border border-base-300 dark:border-base-600 hover:shadow-md transition-all duration-500 animate-in fade-in slide-in-from-bottom-2 select-none text-base-content dark:text-base-100" tabIndex={0}>

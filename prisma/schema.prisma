@@ -27,6 +27,10 @@ model User {
   // Transactions
   transactions       Transaction[]
 
+  // Banking (German banks - finAPI)
+  bankAccounts       BankAccount[]
+  bankingConsents    BankingConsent[]
+
   // NextAuth relations
   accounts           Account[]
   sessions           Session[]
@@ -115,6 +119,61 @@ model MoneyTip {
   impact             String?   // "Sparen pro Monat: €X", etc.
   
   createdAt          DateTime  @default(now())
+}
+
+// Banking Integration - German Banks (finAPI)
+model BankAccount {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  finapiAccountId    String    // finAPI account ID
+  bankName           String    // e.g., "Deutsche Bank"
+  accountNumber      String
+  iban               String    @unique
+  accountType        String    // "checking", "savings", "credit"
+  balance            Float     @default(0)
+  currency           String    @default("EUR")
+  status             String    @default("active") // "active", "inactive", "error"
+  lastSync           DateTime?
+  
+  // OAuth/Token storage
+  accessToken        String?
+  refreshToken       String?
+  tokenExpiresAt     DateTime?
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([finapiAccountId])
+}
+
+model BankingConsent {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  finapiConsentId    String    // finAPI consent ID
+  bankName           String
+  consentType        String    // "AIS" (Account Info) or "PIS" (Payment Initiation)
+  scopes             String[]  // ["accounts", "balances", "transactions", "payments"]
+  status             String    @default("active") // "active", "expired", "revoked"
+  
+  grantedAt          DateTime  @default(now())
+  expiresAt          DateTime
+  lastUsed           DateTime?
+  revokedAt          DateTime?
+  
+  // Audit trail
+  ipAddress          String?
+  userAgent          String?
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([finapiConsentId])
 }
 
 // NextAuth models required by Prisma adapter

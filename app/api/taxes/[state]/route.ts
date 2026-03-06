@@ -3,10 +3,11 @@ import { getBundeslandTaxData } from '@/lib/tax-aggregator';
 
 export async function GET(
   _: Request,
-  { params }: { params: { state: string } }
+  { params }: { params: Promise<{ state: string }> }
 ) {
   try {
-    const stateKey = params.state?.toLowerCase();
+    const { state } = await params;
+    const stateKey = state?.toLowerCase();
     if (!stateKey) {
       return NextResponse.json(
         { ok: false, error: 'state missing' },

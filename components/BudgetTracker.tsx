@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect, useId } from "react";
+import { usePathname } from "next/navigation";
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
@@ -19,6 +20,7 @@ import {
 } from "@/lib/utils";
 
 import Sidebar from "./Sidebar";
+import MobileDrawer from "./MobileDrawer";
 import Header from "./Header";
 import Dashboard from "./Dashboard";
 import Transactions from "./Transactions";
@@ -321,6 +323,10 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   const cur = "EUR";
   const language = useLanguageStore((s) => s.language);
   const tr = translations[language];
+  const pathname = usePathname();
+  const noSidebarRoutes = ['/auth', '/login', '/legal', '/new'];
+  const showSidebar = pathname && !noSidebarRoutes.some((p) => pathname.startsWith(p));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   function exportCSV() {
     const headers = ["Datum", "Typ", "Kategorie", "Beschreibung", "Betrag", "Währung", "Status", "Tag"];
@@ -359,22 +365,29 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   return (
     <div className={mounted && isDark ? 'dark' : ''} data-theme={mounted ? resolvedTheme : undefined}>
       <div className="flex min-h-screen bg-base-100 text-base-content">
-        <div className="hidden lg:flex lg:shrink-0">
-          <Sidebar {...shared} />
-        </div>
-
-        <div className="drawer lg:hidden">
-          <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-side z-50">
-            <label htmlFor="sidebar-toggle" className="drawer-overlay lg:hidden" />
-            <Sidebar {...shared} />
-          </div>
-        </div>
+        {showSidebar && (
+          <>
+            <MobileDrawer
+              open={drawerOpen}
+              onClose={() => setDrawerOpen(false)}
+              taxResult={shared.taxResult}
+              txsLength={shared.txsLength}
+              tab={shared.tab}
+              setTab={(t) => {
+                shared.setTab(t);
+                setDrawerOpen(false);
+              }}
+            />
+            <div className="hidden lg:flex lg:shrink-0">
+              <Sidebar {...shared} />
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col flex-1 min-w-0">
-          <Header {...shared} />
-          <main className="flex-1 overflow-y-auto p-5 lg:p-7 bg-gradient-to-b from-base-100 to-base-100">
-            <div className="max-w-5xl mx-auto">
+          <Header {...shared} onHamburger={() => setDrawerOpen(o => !o)} />
+          <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 md:px-8 lg:p-7 bg-gradient-to-b from-base-100 to-base-100">
+            <div className="w-full max-w-6xl mx-auto">
               {tab === "tax" ? (
                 <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <Tax {...shared} />
@@ -403,12 +416,12 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
           </main>
 
           {/* floating chat popover using UI popover */}
-          <div className="fixed bottom-6 right-6 z-50">
+          <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50">
             <Popover open={chatOpen} onOpenChange={(v) => setChatOpen(v)}>
               <PopoverTrigger asChild>
                 <button
                   suppressHydrationWarning
-                  className="relative bg-primary dark:bg-secondary text-primary-content dark:text-secondary-content rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow"
+                  className="relative bg-primary dark:bg-secondary text-primary-content dark:text-secondary-content rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-shadow active:scale-95 sm:active:scale-100"
                   title="Chat with AI advisor"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

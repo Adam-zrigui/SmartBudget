@@ -5,6 +5,7 @@ import { translations } from "@/lib/translations";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -15,13 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export interface HeaderProps {
-  tab: string;
-  txsLength: number;
-  exportCSV: () => void;
+  tab?: string;
+  txsLength?: number;
+  exportCSV?: () => void;
+  onHamburger?: () => void;
 }
 
-export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
+export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, onHamburger }: HeaderProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === 'dark';
@@ -80,25 +83,38 @@ export default function Header({ tab, txsLength, exportCSV }: HeaderProps) {
     },
   };
   
+  const humanize = (s: string) =>
+    s
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const fallbackLabel = humanize(tab || (pathname?.split('/').pop() || ''));
+
   const current =
     TABS[tab] ??
     (tab === 'new'
       ? { label: language === 'de' ? t.header.newEntry : t.header.newEntry, description: '' }
-      : { label: tab, description: '' });
+      : { label: fallbackLabel, description: '' });
+
+  // hide hamburger only for authentication screens (sidebar not present)
+  const noSidebarRoutes = ['/auth', '/login'];
+  const showHamburger = pathname && !noSidebarRoutes.some((p) => pathname.startsWith(p));
 
   return (
-    <header className="sticky top-0 z-40 glass bg-base-100/90 dark:bg-base-900/90 border-b border-base-200 dark:border-base-700 backdrop-blur-md transition-all duration-300">
+    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl transition-all duration-300" style={{ boxShadow: 'var(--shadow-sm)' }}>
       <div className="flex items-center h-16 ui-container mx-auto px-6 gap-4 text-base-content dark:text-base-100">
         {/* Mobile hamburger */}
-        <label
-          htmlFor="sidebar-toggle"
-          className="btn btn-ghost btn-sm btn-square lg:hidden"
-          aria-label="Menü öffnen"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </label>
+        {showHamburger && (
+          <button
+            onClick={() => onHamburger ? onHamburger() : undefined}
+            className="btn btn-ghost btn-sm btn-square lg:hidden"
+            aria-label="Menü öffnen"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
 
         {/* Title block */}
         <div className="flex-1 min-w-0">

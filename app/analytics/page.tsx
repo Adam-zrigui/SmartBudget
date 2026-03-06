@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import MobileDrawer from '@/components/MobileDrawer';
 import Analytics from '@/components/Analytics';
 import Advisor from '@/components/Advisor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -14,6 +15,7 @@ export default function AnalyticsPage() {
   const language = useLanguageStore((s) => s.language);
 
   const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const popoverId = useId();
@@ -34,31 +36,36 @@ export default function AnalyticsPage() {
 
   const isDark = mounted && resolvedTheme === 'dark';
 
+  // close drawer when navigating (effect moved into MobileDrawer via onNavigate)
+
   return (
     <div className="flex min-h-screen bg-base-100 text-base-content">
-        <div className="hidden lg:flex lg:shrink-0">
-          <Sidebar taxResult={{}} txsLength={0} tab="analytics" setTab={() => {}} />
-        </div>
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        taxResult={{}}
+        txsLength={0}
+        tab="analytics"
+        setTab={() => {}}
+      />
 
-        <div className="drawer lg:hidden">
-          <input id="sidebar-toggle" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-side z-50">
-            <label htmlFor="sidebar-toggle" className="drawer-overlay lg:hidden" />
-            <Sidebar taxResult={{}} txsLength={0} tab="analytics" setTab={() => {}} />
+      <div className="hidden lg:flex lg:shrink-0">
+        <Sidebar taxResult={{}} txsLength={0} tab="analytics" setTab={() => {}} />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <Header
+          tab="analytics"
+          txsLength={0}
+          exportCSV={() => {}}
+          onHamburger={() => setDrawerOpen(o => !o)}
+        />
+        <main className="flex-1 overflow-y-auto p-5 lg:p-8 bg-base-100">
+          <div className="max-w-6xl mx-auto">
+            <Analytics dark={isDark} />
           </div>
-        </div>
-
-        <div className="flex flex-col flex-1 min-w-0">
-          <Header tab="analytics" txsLength={0} exportCSV={() => {}} />
-          <main className="flex-1 overflow-y-auto p-5 lg:p-8 bg-base-100">
-            <div className="max-w-6xl mx-auto">
-              <Analytics dark={isDark} />
-            </div>
-          </main>
-        </div>
-
-        {/* AI Advisor Popover */}
-        <div className="fixed bottom-6 right-6 z-50">
+        </main>
+      </div>
+      <div className="fixed bottom-6 right-6 z-50">
         <Popover open={chatOpen} onOpenChange={(v) => setChatOpen(v)}>
           <PopoverTrigger asChild>
             <button
