@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { authedFetch } from '@/lib/client-auth';
 
 type StateTax = {
   name: string;
@@ -22,7 +23,7 @@ export default function TaxesPage() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch('/api/taxes')
+    authedFetch('/api/taxes')
       .then((r) => r.json())
       .then((j) => {
         if (!mounted) return;
@@ -73,7 +74,7 @@ export default function TaxesPage() {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-base-content">Bundesländer Tax Rates</h1>
+            <h1 className="text-3xl font-bold text-base-content">Bundeslaender Tax Rates</h1>
             <p className="text-sm text-base-content/70 mt-2">Official VAT, church tax, and municipal tax information for all German states</p>
           </div>
 
@@ -152,7 +153,7 @@ export default function TaxesPage() {
                         <div className="mt-3">
                           <div className="flex items-baseline gap-2">
                             <span className="text-sm text-base-content/70">Multiplier Range:</span>
-                            <span className="text-2xl font-bold text-base-content">{selected.municipal_tax_range.min}% – {selected.municipal_tax_range.max}%</span>
+                            <span className="text-2xl font-bold text-base-content">{selected.municipal_tax_range.min}% - {selected.municipal_tax_range.max}%</span>
                           </div>
                           <p className="text-xs text-base-content/70 mt-2">Varies by municipality (Hebesatz)</p>
                         </div>
@@ -163,7 +164,7 @@ export default function TaxesPage() {
                   {/* Info Box */}
                   <div className="bg-warning/10 border border-warning/30 rounded-2xl p-6">
                     <p className="text-sm text-base-content/80 leading-relaxed">
-                      <strong>Disclaimer:</strong> Tax regulations change frequently and may have local variations. This information is provided for reference only. For accurate tax calculations and official filings, please consult your state's finance office (Finanzbehörde) or a qualified tax advisor.
+                      <strong>Disclaimer:</strong> Tax regulations change frequently and may have local variations. This information is provided for reference only. For accurate tax calculations and official filings, please consult your state's finance office (Finanzbehoerde) or a qualified tax advisor.
                     </p>
                   </div>
 

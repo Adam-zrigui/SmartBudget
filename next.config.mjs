@@ -5,7 +5,7 @@ const nextConfig = {
   
   // TypeScript configuration
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Experimental features for performance
@@ -16,6 +16,11 @@ const nextConfig = {
 
   // Compression
   compress: true, // GZIP compression
+
+  compiler: {
+    // Reduce bundle size in production by stripping non-critical logs.
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
   
   // Security headers
   poweredByHeader: false, // Remove X-Powered-By header
@@ -34,10 +39,6 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**',
       },
     ],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -60,15 +61,23 @@ const nextConfig = {
       {
         source: '/api/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=60, s-maxage=120' },
+          // API responses are mostly user-specific and should never be shared publicly.
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },
           { key: 'Content-Type', value: 'application/json' },
         ],
       },
-      // Static assets - long cache
+      // Next.js static assets - long immutable cache
       {
-        source: '/static/:path*',
+        source: '/_next/static/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // Next image optimizer responses
+      {
+        source: '/_next/image',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
         ],
       },
       // Fonts - very long cache
@@ -83,13 +92,6 @@ const nextConfig = {
         source: '/images/:path*',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
-      },
-      // Pages - revalidate frequently for ISR
-      {
-        source: '/((?!_next|api|static|public).*)',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800' },
         ],
       },
       // Global security headers
@@ -148,14 +150,6 @@ const nextConfig = {
   // Turbopack configuration for Next.js 16
   turbopack: {
     // Turbopack handles optimization automatically
-  },
-
-  // Enable logging
-  logging: {
-    fetches: {
-      full: true,
-      hmrRefresh: true,
-    },
   },
 
   // Automatic static optimization

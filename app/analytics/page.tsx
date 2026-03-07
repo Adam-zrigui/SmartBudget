@@ -3,6 +3,7 @@
 import { useState, useEffect, useId } from 'react';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import MobileDrawer from '@/components/MobileDrawer';
@@ -36,6 +37,12 @@ export default function AnalyticsPage() {
 
   const isDark = mounted && resolvedTheme === 'dark';
 
+  const router = useRouter();
+
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   // close drawer when navigating (effect moved into MobileDrawer via onNavigate)
 
   return (
@@ -46,11 +53,11 @@ export default function AnalyticsPage() {
         taxResult={{}}
         txsLength={0}
         tab="analytics"
-        setTab={() => {}}
+        setTab={handleTabChange}
       />
 
       <div className="hidden lg:flex lg:shrink-0">
-        <Sidebar taxResult={{}} txsLength={0} tab="analytics" setTab={() => {}} />
+        <Sidebar taxResult={{}} txsLength={0} tab="analytics" setTab={handleTabChange} />
       </div>
       <div className="flex flex-col flex-1 min-w-0">
         <Header

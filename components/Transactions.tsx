@@ -64,7 +64,7 @@ const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur
         </div>
         <div className="flex items-center gap-2 ml-2">
           <span className={`text-base font-bold tabular-nums ${transaction.type === 'income' ? 'text-success' : 'text-error'}`}>
-            {transaction.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(transaction), cur)}
+            {transaction.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(transaction), cur)}
           </span>
           <button
             className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity p-1"
@@ -204,7 +204,7 @@ export default memo(function Transactions({
 
             {/* Balance badge - Right aligned */}
             <div className={`ml-auto text-sm font-bold px-3 py-2 rounded-lg transition-all duration-300 shadow-sm ${bal >= 0 ? 'bg-success/10 text-success hover:shadow-md' : 'bg-error/10 text-error hover:shadow-md'}`}>
-              {bal >= 0 ? '+' : ''}{fmt(bal, cur)}
+              {bal >= 0 ? '+' : '-'}{fmt(bal, cur)}
             </div>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default memo(function Transactions({
               className="text-xs opacity-40 hover:opacity-70 transition-opacity hover:scale-105 active:scale-95 transform"
               onClick={() => setQ("")}
             >
-              ✗ {language === 'de' ? 'Filter zurücksetzen' : 'Reset Filter'}
+              x {language === 'de' ? 'Filter zuruecksetzen' : 'Reset Filter'}
             </button>
           )}
         </div>
@@ -230,7 +230,7 @@ export default memo(function Transactions({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <div className="text-sm font-medium text-center">{language === 'de' ? 'Keine Buchungen gefunden' : 'No transactions found'}</div>
-            <div className="text-xs mt-1 text-center">{language === 'de' ? 'Passe deine Filter an oder erstelle neue Einträge' : 'Adjust filters or create new entries'}</div>
+            <div className="text-xs mt-1 text-center">{language === 'de' ? 'Passe deine Filter an oder erstelle neue Eintraege' : 'Adjust filters or create new entries'}</div>
           </div>
         ) : (
           <>
@@ -259,18 +259,15 @@ export default memo(function Transactions({
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3">{language === 'de' ? 'Beschreibung' : 'Description'}</th>
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3">{language === 'de' ? 'Kategorie' : 'Category'}</th>
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3 text-right">{language === 'de' ? 'Betrag' : 'Amount'}</th>
-                    <th className="bg-base-100 w-16" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((t) => {
-                    const ct = getCat(t.category) || { color: "#9ca3af", icon: "" };
-                    const tagInfo = t.tag ? (TAG as any)[t.tag] : null;
-                    const statusLabel = t.employmentStatus
-                      ? ((tr.form as any)?.employmentStatus?.[t.employmentStatus] || t.employmentStatus)
-                      : '';
+                    <th className="bg-base-100 w-28" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t) => {
+                  const ct = getCat(t.category) || { color: "#9ca3af", icon: "" };
+                  const tagInfo = t.tag ? (TAG as any)[t.tag] : null;
 
-                    return (
+                  return (
                       <tr
                         key={t.id}
                         className="border-b border-base-200 last:border-0 hover:bg-base-200/50 transition-all duration-300 group animate-in fade-in slide-in-from-left-2"
@@ -311,13 +308,13 @@ export default memo(function Transactions({
                         <td className="py-3 text-right">
                           <div className="group relative">
                             <span className={`text-sm font-bold tabular-nums transition-all duration-200 cursor-help ${t.type === 'income' ? 'text-success group-hover:text-success/80' : 'text-error group-hover:text-error/80'}`}>
-                              {t.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(t), cur)}
+                              {t.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(t), cur)}
                             </span>
                             {/* Tax Breakdown Tooltip */}
                             {(t.vat || t.churchTax) && (
                               <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block z-50">
                                 <div className="bg-base-content text-base-100 text-xs rounded-lg p-3 whitespace-nowrap shadow-lg">
-                                  <div className="font-semibold mb-2">{language === 'de' ? 'Steueraufschlüsselung' : 'Tax Breakdown'}</div>
+                                  <div className="font-semibold mb-2">{language === 'de' ? 'Steueraufschluesselung' : 'Tax Breakdown'}</div>
                                   <div className="space-y-1">
                                     <div className="flex justify-between gap-4">
                                       <span>{language === 'de' ? 'Brutto:' : 'Gross:'}</span>
@@ -339,7 +336,7 @@ export default memo(function Transactions({
                                       <div className="flex justify-between gap-4 font-semibold">
                                         <span>{language === 'de' ? 'Netto:' : 'Net:'}</span>
                                         <span className={t.type === 'income' ? 'text-success' : 'text-error'}>
-                                          {t.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(t), cur)}
+                                          {t.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(t), cur)}
                                         </span>
                                       </div>
                                     </div>
@@ -347,6 +344,26 @@ export default memo(function Transactions({
                                 </div>
                               </div>
                             )}
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs"
+                              onClick={() => openEdit(t)}
+                              aria-label={language === 'de' ? 'Buchung bearbeiten' : 'Edit transaction'}
+                            >
+                              {language === 'de' ? 'Bearbeiten' : 'Edit'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs text-error"
+                              onClick={() => setDelId(t.id)}
+                              aria-label={language === 'de' ? 'Buchung loeschen' : 'Delete transaction'}
+                            >
+                              {language === 'de' ? 'Loeschen' : 'Delete'}
+                            </button>
                           </div>
                         </td>
                       </tr>

@@ -26,16 +26,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ reply });
     }
 
-    // optionally gather some context from user's transactions (optimized query)
-    const recent = await prisma.transaction.findMany({
-      where: { userId },
-      select: {
-        type: true,
-        amount: true,
-      },
-      orderBy: { date: "desc" },
-      take: 20,
-    });
+    // Optionally gather context from recent transactions.
+    // If the transactions table is unavailable (e.g. fresh DB), continue with zeroed context.
+    let recent: Array<{ type: string; amount: number | null }> = [];
+    try {
+      recent = await prisma.transaction.findMany({
+        where: { userId },
+        select: {
+          type: true,
+          amount: true,
+        },
+        orderBy: { date: "desc" },
+        take: 20,
+      });
+    } catch (dbErr: any) {
+      const code = String(dbErr?.code || "");
+      if (code !== "P2021") {
+        console.error("AI route context query error", dbErr);
+      }
+      recent = [];
+    }
     const income = recent.filter((t) => t.type === 'income').reduce((s, t) => s + (t.amount || 0), 0);
     const expense = recent.filter((t) => t.type === 'expense').reduce((s, t) => s + (t.amount || 0), 0);
 
@@ -145,6 +155,9 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("AI route error", err);
     const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.json({ error: `Server error: ${msg}` }, { status: 500 });
   }
 }

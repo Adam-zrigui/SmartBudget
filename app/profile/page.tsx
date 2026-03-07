@@ -3,6 +3,7 @@
 import { useState, useEffect, useId } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
+import { updateProfile } from 'firebase/auth';
 import AppShell from '@/components/AppShell';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -12,6 +13,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { authedFetch } from '@/lib/client-auth';
 
 export default function ProfileContent() {
   const { user, loading, signOut } = useAuth();
@@ -79,6 +81,10 @@ export default function ProfileContent() {
 
   const isDark = mounted && resolvedTheme === 'dark';
 
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
@@ -98,7 +104,7 @@ export default function ProfileContent() {
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/transactions/export?format=${format}`);
+      const response = await authedFetch(`/api/transactions/export?format=${format}`);
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -132,8 +138,8 @@ export default function ProfileContent() {
         
         try {
           // Update Firebase user profile with the image
-          if (user && user.updateProfile) {
-            await user.updateProfile({
+          if (user) {
+            await updateProfile(user, {
               photoURL: base64,
             });
           }
@@ -166,8 +172,8 @@ export default function ProfileContent() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      if (user && user.updateProfile) {
-        await user.updateProfile({
+      if (user) {
+        await updateProfile(user, {
           displayName: nameInput || undefined,
         });
       }
@@ -191,7 +197,7 @@ export default function ProfileContent() {
 
   return (
     <PageAnimationWrapper>
-    <AppShell tab="profile" txsLength={0} exportCSV={() => {}} taxResult={{}} setTab={() => {}}>
+    <AppShell tab="profile" txsLength={0} exportCSV={() => {}} taxResult={{}} setTab={handleTabChange}>
       <div className="max-w-5xl mx-auto">
             {/* Profile Header */}
             <div className="mb-8">
@@ -536,5 +542,3 @@ export default function ProfileContent() {
     </PageAnimationWrapper>
   );
 }
-
-

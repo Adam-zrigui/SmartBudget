@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useId } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
@@ -35,6 +36,12 @@ export default function AdvisorPage() {
 
   const isDark = mounted && resolvedTheme === 'dark';
 
+  const router = useRouter();
+
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-base-100 text-base-content">
       <MobileDrawer
@@ -43,11 +50,11 @@ export default function AdvisorPage() {
         taxResult={{}}
         txsLength={0}
         tab="advisor"
-        setTab={() => {}}
+        setTab={handleTabChange}
       />
 
       <div className="hidden lg:flex lg:shrink-0">
-        <Sidebar taxResult={{}} txsLength={0} tab="advisor" setTab={() => {}} />
+        <Sidebar taxResult={{}} txsLength={0} tab="advisor" setTab={handleTabChange} />
       </div>
       <div className="flex flex-col flex-1 min-w-0">
         <Header

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
@@ -11,6 +10,7 @@ import Sidebar from '@/components/Sidebar'
 import MobileDrawer from '@/components/MobileDrawer'
 import { useLanguageStore } from '@/lib/store'
 import { useTranslations } from '@/lib/translations'
+import { authedFetch } from '@/lib/client-auth'
 
 type BundeslandTax = {
   name: string;
@@ -59,7 +59,7 @@ export default function NewEntryPage () {
   const language = useLanguageStore((s) => s.language);
   const t = useTranslations(language);
 
-  const [dbCategories, setDbCategories] = useState<string[] | null>(null);
+  const [dbCategoriesByType, setDbCategoriesByType] = useState<Record<string, string[]> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   // Load Bundesländer
@@ -67,7 +67,7 @@ export default function NewEntryPage () {
     let cancelled = false;
     async function loadBundeslands() {
       try {
-        const res = await fetch('/api/taxes');
+        const res = await authedFetch('/api/taxes');
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
@@ -87,12 +87,19 @@ export default function NewEntryPage () {
     let cancelled = false;
     async function loadCats() {
       try {
-        const res = await fetch('/api/transactions');
+        const res = await authedFetch('/api/transactions');
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
-        const uniq = Array.from(new Set(data.map((d: any) => d.category))).filter(Boolean) as string[];
-        setDbCategories(uniq.length ? uniq : null);
+        const byType: Record<string, Set<string>> = { income: new Set(), expense: new Set() };
+        for (const tx of data || []) {
+          if (!tx?.category || (tx?.type !== 'income' && tx?.type !== 'expense')) continue;
+          byType[tx.type].add(tx.category);
+        }
+        setDbCategoriesByType({
+          income: Array.from(byType.income),
+          expense: Array.from(byType.expense),
+        });
       } catch (e) {
         // ignore
       }
@@ -146,19 +153,12 @@ export default function NewEntryPage () {
 
   const taxBreakdown = calculateTaxes();
   async function save() {
-    toastState.toast({ title: language === 'de' ? 'Button gedrückt' : 'Button clicked', variant: 'default' }); // DEBUG: simple toast to confirm click
-    console.log('[SAVE] Button clicked');
-    console.log('[SAVE] Form state:', form);
-    console.log('[SAVE] Selected bundesland:', selectedBundeslandData);
-    
     if (!form.amount || !form.description) {
-      console.log('[SAVE] Validation failed - amount:', form.amount, 'description:', form.description);
       toastState.toast({ title: language === 'de' ? 'Bitte alle Felder ausfüllen' : 'Please fill in all fields', variant: 'destructive' });
       return;
     }
     
     setIsLoading(true);
-    console.log('[SAVE] Starting submission, isLoading set to true');
     
     const submitData = { ...form };
     if (selectedBundeslandData) {
@@ -171,24 +171,16 @@ export default function NewEntryPage () {
         : (selectedBundeslandData.vat_standard || 19);
     }
     
-    console.log('[SAVE] Submit data prepared:', submitData);
-    
     try {
-      console.log('[SAVE] Sending POST request to /api/transactions');
-      const res = await fetch('/api/transactions', {
+      const res = await authedFetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(submitData),
       });
-      console.log('[SAVE] Response received, status:', res.status);
-      
       if (!res.ok) {
         const errText = await res.text();
-        console.error('[SAVE] Error response:', res.status, errText);
         
         if (res.status === 401) {
-          console.log('[SAVE] Got 401, redirecting to signin');
           toastState.toast({ title: language === 'de' ? 'Bitte anmelden' : 'Please log in', variant: 'destructive' });
           setIsLoading(false);
           setTimeout(() => router.push('/auth/signin'), 1500);
@@ -200,12 +192,11 @@ export default function NewEntryPage () {
         return;
       }
       
-      const created = await res.json();
-      console.log('[SAVE] Success, created:', created);
+      await res.json();
       toastState.toast({ title: language === 'de' ? 'Buchung hinzugefügt' : 'Transaction created' });
       setTimeout(() => router.push('/'), 500);
     } catch (err) {
-      console.error('[SAVE] Exception:', err);
+      console.error('save new transaction error:', err);
       toastState.toast({ title: language === 'de' ? 'Fehler beim Speichern' : 'Error saving', description: String(err), variant: 'destructive' });
       setIsLoading(false);
     }
@@ -216,9 +207,9 @@ export default function NewEntryPage () {
   }
 
   const builtCats = CATEGORIES.filter((ct) => ct.type === form.type);
-  const categories = dbCategories
-    ? dbCategories.map((name) => {
-        const m = CATEGORIES.find((c) => c.name === name);
+  const categories = dbCategoriesByType?.[form.type]?.length
+    ? dbCategoriesByType[form.type].map((name) => {
+        const m = CATEGORIES.find((c) => c.name === name && c.type === form.type);
         return { name, icon: m?.icon ?? '' };
       })
     : builtCats;
@@ -247,6 +238,10 @@ export default function NewEntryPage () {
     setTab: () => {},
   } as any;
 
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   return (
     <div className={mounted && isDark ? 'dark' : ''} data-theme={mounted ? resolvedTheme : undefined}>
       <div className="flex min-h-screen bg-base-100 text-base-content">
@@ -256,7 +251,7 @@ export default function NewEntryPage () {
           taxResult={defaultTaxResult}
           txsLength={0}
           tab="new"
-          setTab={() => {}}
+          setTab={handleTabChange}
         />
         <div className="hidden lg:flex lg:shrink-0">
           <Sidebar {...shared} />
@@ -382,12 +377,14 @@ export default function NewEntryPage () {
                               category: opt.key === 'income' ? 'Gehalt' : 'Lebensmittel',
                             }))
                           }
-                          className={`p-4 rounded-2xl transition-all duration-200 font-semibold text-center border-2 hover:scale-105 active:scale-95 transform ${
-                            form.type === opt.key
-                              ? `border-${opt.color} bg-${opt.color}/10 text-${opt.color}`
-                              : 'border-base-300 hover:border-base-400 opacity-60 hover:opacity-100'
-                          }`}
-                        >
+                            className={`p-4 rounded-2xl transition-all duration-200 font-semibold text-center border-2 hover:scale-105 active:scale-95 transform ${
+                              form.type === opt.key
+                                ? (opt.key === 'expense'
+                                  ? 'border-error bg-error/10 text-error'
+                                  : 'border-success bg-success/10 text-success')
+                                : 'border-base-300 hover:border-base-400 opacity-60 hover:opacity-100'
+                            }`}
+                          >
                           {opt.label}
                         </button>
                       ))}

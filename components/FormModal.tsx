@@ -50,7 +50,7 @@ export default function FormModal({
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-base-200 flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className="text-sm sm:text-base font-bold tracking-tight">
-              {editId ? t.form.create : t.form.newEntry}
+              {editId ? (language === 'de' ? 'Buchung bearbeiten' : 'Edit entry') : t.form.newEntry}
             </h3>
             <p className="text-xs opacity-40 mt-0.5">{t.form.fillAllFields}</p>
           </div>
@@ -174,7 +174,7 @@ export default function FormModal({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
-            {editId ? t.form.create : t.form.create}
+            {editId ? (language === 'de' ? 'Speichern' : 'Save') : t.form.create}
           </button>
         </div>
       </div>

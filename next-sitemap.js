@@ -6,4 +6,4 @@ module.exports = {
   priority: 0.7,
   sitemapSize: 7000,
   exclude: ['/profile/*', '/auth/*', '/api/*'],
-};
+}; 

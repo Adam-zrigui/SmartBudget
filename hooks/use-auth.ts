@@ -12,11 +12,11 @@ export function useAuth() {
   useEffect(() => {
     // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged(
-      (currentUser) => {
+      (currentUser: User | null) => {
         setUser(currentUser);
         setLoading(false);
       },
-      (err) => {
+      (err: Error) => {
         setError(err.message);
         setLoading(false);
       }

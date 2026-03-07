@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useId } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import Header from '@/components/Header';
@@ -94,6 +94,12 @@ export default function TaxPage() {
     return () => { cancelled = true; };
   }, [tax]);
 
+  const router = useRouter();
+
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   return (
     <div>
       <div className="flex min-h-screen bg-base-100 text-base-content">
@@ -103,11 +109,11 @@ export default function TaxPage() {
           taxResult={taxResult}
           txsLength={0}
           tab="tax"
-          setTab={() => {}}
+          setTab={handleTabChange}
         />
 
         <div className="hidden lg:flex lg:shrink-0">
-          <Sidebar taxResult={taxResult} txsLength={0} tab="tax" setTab={() => {}} />
+          <Sidebar taxResult={taxResult} txsLength={0} tab="tax" setTab={handleTabChange} />
         </div>
 
         <div className="flex flex-col flex-1 min-w-0">

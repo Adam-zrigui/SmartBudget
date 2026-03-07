@@ -42,9 +42,9 @@ export async function GET(req: NextRequest) {
         'Cache-Control': 'private, max-age=60', // 1 minute cache
       },
     });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("GET /api/transactions error:", err);
-    const msg = String(err?.message || err);
+    const msg = err instanceof Error ? err.message : String(err);
     
     // If auth failed, return 401
     if (msg.includes("Unauthorized") || msg.includes("token")) {

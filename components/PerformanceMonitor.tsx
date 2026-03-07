@@ -12,7 +12,7 @@
  */
 
 import { useEffect } from 'react';
-import { getCLS, getFCP, getFID, getLCP, getTTFB, getINP } from 'web-vitals';
+import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
 interface MetricData {
   name: string;
@@ -25,7 +25,7 @@ interface MetricData {
 export default function PerformanceMonitor() {
   useEffect(() => {
     // LCP (Largest Contentful Paint) - Target: < 2.5s
-    getLCP((metric) => {
+    onLCP((metric: Metric) => {
       const data = {
         name: 'LCP',
         value: metric.value,
@@ -38,9 +38,9 @@ export default function PerformanceMonitor() {
     });
 
     // FID (First Input Delay) - Target: < 100ms
-    getFID((metric) => {
+    onINP((metric: Metric) => {
       const data = {
-        name: 'FID',
+        name: 'INP',
         value: metric.value,
         rating: metric.rating,
         delta: metric.delta,
@@ -51,7 +51,7 @@ export default function PerformanceMonitor() {
     });
 
     // CLS (Cumulative Layout Shift) - Target: < 0.1
-    getCLS((metric) => {
+    onCLS((metric: Metric) => {
       const data = {
         name: 'CLS',
         value: metric.value,
@@ -64,7 +64,7 @@ export default function PerformanceMonitor() {
     });
 
     // FCP (First Contentful Paint) - Target: < 1.8s
-    getFCP((metric) => {
+    onFCP((metric: Metric) => {
       const data = {
         name: 'FCP',
         value: metric.value,
@@ -77,7 +77,7 @@ export default function PerformanceMonitor() {
     });
 
     // TTFB (Time to First Byte) - Target: < 600ms
-    getTTFB((metric) => {
+    onTTFB((metric: Metric) => {
       const data = {
         name: 'TTFB',
         value: metric.value,
@@ -90,17 +90,6 @@ export default function PerformanceMonitor() {
     });
 
     // INP (Interaction to Next Paint) - Target: < 200ms
-    getINP((metric) => {
-      const data = {
-        name: 'INP',
-        value: metric.value,
-        rating: metric.rating,
-        delta: metric.delta,
-        id: metric.id,
-      };
-      logMetric(data);
-      sendToAnalytics(data);
-    });
   }, []);
 
   return null; // This component doesn't render anything, just monitors

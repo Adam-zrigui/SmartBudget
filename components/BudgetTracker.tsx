@@ -1,11 +1,12 @@
 "use client";
 import { useState, useMemo, useEffect, useId } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 import { Transaction } from '@/lib/store';
 import { usePrefetch } from '@/hooks/use-prefetch';
+import { authedFetch } from '@/lib/client-auth';
 import {
   calcGermanTax,
   DE_TAX_CLASSES,
@@ -29,6 +30,11 @@ import Tax from "./Tax";
 import SalaryPlanner from "./SalaryPlanner";
 import Advisor from "./Advisor";
 import Profile from "./Profile";
+import BudgetManager from "./BudgetManager";
+import SavingsGoals from "./SavingsGoals";
+import RecurringManager from "./RecurringManager";
+import InvestmentTracker from "./InvestmentTracker";
+import CurrencyConverter from "./CurrencyConverter";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import FormModal from "./FormModal";
 import DeleteModal from "./DeleteModal";
@@ -40,15 +46,25 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   
   // theme is managed by next-themes; resolvedTheme gives the actual value (light or dark)
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isDark = mounted && resolvedTheme === 'dark';
-  const [tab, setTab] = useState(initialTab);
+  
+  // Read tab from URL params, fallback to initialTab
+  const urlTab = searchParams.get('tab');
+  const [tab, setTab] = useState(urlTab || initialTab);
   // stable id for popover content to prevent hydration mismatches
   const popoverId = useId();
 
   // transactions are fetched from API
   const [txs, setTxs] = useState<any[]>([]);
+  const [recurringTransactions, setRecurringTransactions] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<any[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
+  const [investments, setInvestments] = useState<any[]>([]);
+  const [currencies, setCurrencies] = useState<any[]>([]);
+  const [baseCurrency, setBaseCurrencyCode] = useState<string>("EUR");
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
@@ -60,13 +76,88 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch('/api/transactions');
+      const res = await authedFetch('/api/transactions');
       if (res.ok) {
         const data = await res.json();
         if (!cancelled) setTxs(data);
       }
     }
     load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // load recurring transactions
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRecurring() {
+      const res = await authedFetch('/api/recurring-transactions');
+      if (res.ok) {
+        const data = await res.json();
+        if (!cancelled) setRecurringTransactions(data);
+      }
+    }
+    loadRecurring();
+    return () => { cancelled = true; };
+  }, []);
+
+  // load budgets
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBudgets() {
+      const res = await authedFetch('/api/budgets');
+      if (res.ok) {
+        const data = await res.json();
+        if (!cancelled) setBudgets(data);
+      }
+    }
+    loadBudgets();
+    return () => { cancelled = true; };
+  }, []);
+
+  // load savings goals
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSavingsGoals() {
+      const res = await authedFetch('/api/savings-goals');
+      if (res.ok) {
+        const data = await res.json();
+        if (!cancelled) setSavingsGoals(data);
+      }
+    }
+    loadSavingsGoals();
+    return () => { cancelled = true; };
+  }, []);
+
+  // load investments
+  useEffect(() => {
+    let cancelled = false;
+    async function loadInvestments() {
+      const res = await authedFetch('/api/investments');
+      if (res.ok) {
+        const data = await res.json();
+        if (!cancelled) setInvestments(data);
+      }
+    }
+    loadInvestments();
+    return () => { cancelled = true; };
+  }, []);
+
+  // load currencies
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCurrencies() {
+      const res = await authedFetch('/api/currencies');
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : [];
+        const detectedBase = list.find((c: any) => c?.isBase)?.code || "EUR";
+        if (!cancelled) {
+          setCurrencies(list);
+          setBaseCurrencyCode(detectedBase);
+        }
+      }
+    }
+    loadCurrencies();
     return () => { cancelled = true; };
   }, []);
 
@@ -167,6 +258,14 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     return () => window.removeEventListener('ai:plan', onAiPlan as EventListener);
   }, []);
 
+  // Update tab when URL changes
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && urlTab !== tab) {
+      setTab(urlTab);
+    }
+  }, [searchParams, tab]);
+
   const filtered = useMemo(
     () =>
       txs
@@ -234,7 +333,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       // don't send an id for new items
       const payload = { ...tx };
       delete payload.id;
-      const res = await fetch("/api/transactions", {
+      const res = await authedFetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -254,7 +353,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
 
   async function updateTx(tx: any) {
     try {
-      const res = await fetch(`/api/transactions/${tx.id}`, {
+      const res = await authedFetch(`/api/transactions/${tx.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tx),
@@ -274,7 +373,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
 
   async function deleteTx(id: string) {
     try {
-      const res = await fetch(`/api/transactions/${id}`, {
+      const res = await authedFetch(`/api/transactions/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -285,6 +384,396 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       return true;
     } catch (err) {
       console.error("deleteTx error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  // helpers for recurring transactions
+  async function addRecurringTx(recurring: any) {
+    try {
+      const payload = { ...recurring };
+      delete payload.id;
+      const res = await authedFetch("/api/recurring-transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Erstellen der wiederkehrenden Buchung", "err");
+        return;
+      }
+      const created = await res.json();
+      setRecurringTransactions((prev) => [...prev, created]);
+      return created;
+    } catch (err) {
+      console.error("addRecurringTx error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function updateRecurringTx(recurring: any) {
+    try {
+      const res = await authedFetch(`/api/recurring-transactions/${recurring.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recurring),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren der wiederkehrenden Buchung", "err");
+        return;
+      }
+      const updated = await res.json();
+      setRecurringTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      return updated;
+    } catch (err) {
+      console.error("updateRecurringTx error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function deleteRecurringTx(id: string) {
+    try {
+      const res = await authedFetch(`/api/recurring-transactions/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        notify("Fehler beim Löschen der wiederkehrenden Buchung", "err");
+        return;
+      }
+      setRecurringTransactions((prev) => prev.filter((t) => t.id !== id));
+      return true;
+    } catch (err) {
+      console.error("deleteRecurringTx error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function toggleRecurringActive(id: string, active: boolean) {
+    try {
+      const res = await authedFetch(`/api/recurring-transactions/${id}/toggle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: active }),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Ändern des Status", "err");
+        return;
+      }
+      const updated = await res.json();
+      setRecurringTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      return updated;
+    } catch (err) {
+      console.error("toggleRecurringActive error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  // helpers for budgets
+  async function addBudget(budget: any) {
+    try {
+      const payload = { ...budget };
+      delete payload.id;
+      const res = await authedFetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Erstellen des Budgets", "err");
+        return;
+      }
+      const created = await res.json();
+      setBudgets((prev) => [...prev, created]);
+      return created;
+    } catch (err) {
+      console.error("addBudget error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function updateBudget(budget: any) {
+    try {
+      const res = await authedFetch(`/api/budgets/${budget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(budget),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren des Budgets", "err");
+        return;
+      }
+      const updated = await res.json();
+      setBudgets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      return updated;
+    } catch (err) {
+      console.error("updateBudget error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function deleteBudget(id: string) {
+    try {
+      const res = await authedFetch(`/api/budgets/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        notify("Fehler beim Löschen des Budgets", "err");
+        return;
+      }
+      setBudgets((prev) => prev.filter((b) => b.id !== id));
+      return true;
+    } catch (err) {
+      console.error("deleteBudget error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  // helpers for savings goals
+  async function addSavingsGoal(goal: any) {
+    try {
+      const payload = { ...goal };
+      delete payload.id;
+      const res = await authedFetch("/api/savings-goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Erstellen des Sparziels", "err");
+        return;
+      }
+      const created = await res.json();
+      setSavingsGoals((prev) => [...prev, created]);
+      return created;
+    } catch (err) {
+      console.error("addSavingsGoal error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function updateSavingsGoal(goal: any) {
+    try {
+      const res = await authedFetch(`/api/savings-goals/${goal.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(goal),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren des Sparziels", "err");
+        return;
+      }
+      const updated = await res.json();
+      setSavingsGoals((prev) => prev.map((g) => (g.id === updated.id ? updated : g)));
+      return updated;
+    } catch (err) {
+      console.error("updateSavingsGoal error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function deleteSavingsGoal(id: string) {
+    try {
+      const res = await authedFetch(`/api/savings-goals/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        notify("Fehler beim Löschen des Sparziels", "err");
+        return;
+      }
+      setSavingsGoals((prev) => prev.filter((g) => g.id !== id));
+      return true;
+    } catch (err) {
+      console.error("deleteSavingsGoal error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function addGoalContribution(contribution: any) {
+    try {
+      const res = await authedFetch("/api/goal-contributions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contribution),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Hinzufügen der Einzahlung", "err");
+        return;
+      }
+      const created = await res.json();
+      // Update the goal's current amount
+      setSavingsGoals((prev) => prev.map((g) => 
+        g.id === contribution.goalId 
+          ? { ...g, currentAmount: g.currentAmount + contribution.amount }
+          : g
+      ));
+      return created;
+    } catch (err) {
+      console.error("addGoalContribution error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  // helpers for investments
+  async function addInvestment(investment: any) {
+    try {
+      const payload = { ...investment };
+      delete payload.id;
+      const res = await authedFetch("/api/investments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Erstellen der Investition", "err");
+        return;
+      }
+      const created = await res.json();
+      setInvestments((prev) => [...prev, created]);
+      return created;
+    } catch (err) {
+      console.error("addInvestment error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function updateInvestment(investment: any) {
+    try {
+      const res = await authedFetch(`/api/investments/${investment.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(investment),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren der Investition", "err");
+        return;
+      }
+      const updated = await res.json();
+      setInvestments((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      return updated;
+    } catch (err) {
+      console.error("updateInvestment error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function deleteInvestment(id: string) {
+    try {
+      const res = await authedFetch(`/api/investments/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        notify("Fehler beim Löschen der Investition", "err");
+        return;
+      }
+      setInvestments((prev) => prev.filter((i) => i.id !== id));
+      return true;
+    } catch (err) {
+      console.error("deleteInvestment error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function updateInvestmentPrices(investments: any[]) {
+    try {
+      const res = await authedFetch("/api/investments/update-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ investments }),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren der Preise", "err");
+        return;
+      }
+      const updated = await res.json();
+      setInvestments((prev) => prev.map((i) => {
+        const updatedInvestment = updated.find((u: any) => u.id === i.id);
+        return updatedInvestment || i;
+      }));
+      notify("Preise aktualisiert");
+    } catch (err) {
+      console.error("updateInvestmentPrices error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  // helpers for currencies
+  async function updateExchangeRates() {
+    try {
+      const res = await authedFetch("/api/currencies/update-rates", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        notify("Fehler beim Aktualisieren der Wechselkurse", "err");
+        return;
+      }
+      const updated = await res.json();
+      setCurrencies(updated);
+      const detectedBase = Array.isArray(updated) ? updated.find((c: any) => c?.isBase)?.code : null;
+      if (detectedBase) setBaseCurrencyCode(detectedBase);
+      notify("Wechselkurse aktualisiert");
+    } catch (err) {
+      console.error("updateExchangeRates error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function setBaseCurrency(currencyCode: string) {
+    try {
+      const res = await authedFetch("/api/currencies/set-base", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseCurrency: currencyCode }),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Ändern der Basiswährung", "err");
+        return;
+      }
+      const updated = await res.json();
+      setCurrencies(updated);
+      setBaseCurrencyCode(currencyCode);
+      notify("Basiswährung geändert");
+    } catch (err) {
+      console.error("setBaseCurrency error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function addCurrency(currency: { code: string; name?: string; exchangeRate?: number }) {
+    try {
+      const res = await authedFetch("/api/currencies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(currency),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Hinzufügen der Währung", "err");
+        return;
+      }
+      const created = await res.json();
+      setCurrencies((prev) => {
+        const withoutExisting = prev.filter((c) => c.code !== created.code);
+        return [...withoutExisting, created].sort((a, b) => a.code.localeCompare(b.code));
+      });
+    } catch (err) {
+      console.error("addCurrency error", err);
+      notify("Netzwerkfehler", "err");
+    }
+  }
+
+  async function removeCurrency(code: string) {
+    try {
+      const res = await authedFetch("/api/currencies", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (!res.ok) {
+        notify("Fehler beim Entfernen der Währung", "err");
+        return;
+      }
+      setCurrencies((prev) => prev.filter((c) => c.code !== code));
+    } catch (err) {
+      console.error("removeCurrency error", err);
       notify("Netzwerkfehler", "err");
     }
   }
@@ -410,6 +899,11 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
                   )}
                   {tab === "transactions" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><Transactions {...shared} /></div>}
                   {tab === "analytics" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><Analytics {...shared} /></div>}
+                  {tab === "budget" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><BudgetManager budgets={budgets} transactions={txs} addBudget={addBudget} updateBudget={updateBudget} deleteBudget={deleteBudget} /></div>}
+                  {tab === "goals" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><SavingsGoals goals={savingsGoals} addGoal={addSavingsGoal} updateGoal={updateSavingsGoal} deleteGoal={deleteSavingsGoal} addContribution={addGoalContribution} /></div>}
+                  {tab === "recurring" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><RecurringManager recurringTransactions={recurringTransactions} onCreateRecurring={addRecurringTx} onUpdateRecurring={updateRecurringTx} onDeleteRecurring={deleteRecurringTx} onToggleActive={toggleRecurringActive} /></div>}
+                  {tab === "investments" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><InvestmentTracker investments={investments} onCreateInvestment={addInvestment} onUpdateInvestment={updateInvestment} onDeleteInvestment={deleteInvestment} onUpdatePrices={updateInvestmentPrices} /></div>}
+                  {tab === "currency" && <div className="animate-in fade-in slide-in-from-bottom-4 duration-500"><CurrencyConverter currencies={currencies} baseCurrency={baseCurrency} updateRates={updateExchangeRates} setBaseCurrency={setBaseCurrency} addCurrency={addCurrency} removeCurrency={removeCurrency} /></div>}
                 </>
               )}
             </div>
@@ -460,3 +954,4 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     </div>
   );
 }
+

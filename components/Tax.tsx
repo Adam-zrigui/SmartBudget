@@ -2,6 +2,7 @@ import { fmt, KIRCHE_RATE, calcGermanTaxMatrix } from "@/lib/utils";
 import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { useEffect, useState } from "react";
+import { authedFetch } from "@/lib/client-auth";
 
 export interface TaxProps {
   tax: any;
@@ -55,7 +56,7 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
   useEffect(() => {
     let mounted = true;
     setStatesLoading(true);
-    fetch('/api/taxes')
+    authedFetch('/api/taxes')
       .then((r) => r.json())
       .then((j) => {
         if (!mounted) return;
@@ -89,7 +90,7 @@ export default function Tax({ tax, setTax, taxResult, DE_TAX_CLASSES, DE_STATES 
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/transactions?type=income');
+        const res = await authedFetch('/api/transactions?type=income');
         if (!res.ok) return; // likely unauthorized in dev
         const data = await res.json();
         if (cancelled) return;

@@ -318,3 +318,46 @@ export default memo(function Transactions({
                               <div className="absolute right-0 bottom-full mb-2 hidden group-hover:block z-50">
                                 <div className="bg-base-content text-base-100 text-xs rounded-lg p-3 whitespace-nowrap shadow-lg">
                                   <div className="font-semibold mb-2">{language === 'de' ? 'Steueraufschlüsselung' : 'Tax Breakdown'}</div>
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between gap-4">
+                                      <span>{language === 'de' ? 'Brutto:' : 'Gross:'}</span>
+                                      <span className="font-medium">{fmt(t.amount, cur)}</span>
+                                    </div>
+                                    {t.vat > 0 && (
+                                      <div className="flex justify-between gap-4">
+                                        <span>{language === 'de' ? 'MwSt:' : 'VAT:'}</span>
+                                        <span className="text-error">-{fmt(t.amount * (t.vat / 100), cur)}</span>
+                                      </div>
+                                    )}
+                                    {t.churchTax > 0 && (
+                                      <div className="flex justify-between gap-4">
+                                        <span>{language === 'de' ? 'Kirchensteuer:' : 'Church tax:'}</span>
+                                        <span className="text-error">-{fmt(t.amount * (t.churchTax / 100), cur)}</span>
+                                      </div>
+                                    )}
+                                    <div className="border-t border-base-300/50 pt-1 mt-2">
+                                      <div className="flex justify-between gap-4 font-semibold">
+                                        <span>{language === 'de' ? 'Netto:' : 'Net:'}</span>
+                                        <span className={t.type === 'income' ? 'text-success' : 'text-error'}>
+                                          {t.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(t), cur)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+});

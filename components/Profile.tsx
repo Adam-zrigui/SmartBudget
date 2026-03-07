@@ -8,6 +8,7 @@ import { translations } from '@/lib/translations';
 import Link from 'next/link';
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import Advisor from "./Advisor";
+import { authedFetch } from '@/lib/client-auth';
 
 export interface ProfileProps {
   setTab?: (tab: string) => void;
@@ -70,7 +71,7 @@ export default function Profile({ setTab }: ProfileProps) {
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/transactions/export?format=${format}`);
+      const response = await authedFetch(`/api/transactions/export?format=${format}`);
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

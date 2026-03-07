@@ -41,6 +41,18 @@ model User {
   // Goals
   savingsGoals       SavingsGoal[]
   
+  // Recurring transactions
+  recurringTransactions RecurringTransaction[]
+  
+  // Investments
+  investments         Investment[]
+  
+  // Currencies
+  currencies          Currency[]
+  
+  // User settings
+  settings            UserSettings?
+  
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 }
@@ -57,6 +69,11 @@ model Transaction {
   date               DateTime
   tag                String?   // "recurring", "annual", etc.
   
+  // Recurring transaction relations
+  recurringId        String?   // Links to RecurringTransaction that generated this
+  recurring          RecurringTransaction? @relation("GeneratedTransactions", fields: [recurringId], references: [id])
+  isRecurringTemplate Boolean  @default(false) // This transaction is a template for recurring
+  
   // Tax / State Info
   bundesland         String?   // State name (e.g., "Bayern", "Berlin")
   vat                Float?    // Applied VAT rate (19, 7, etc.)
@@ -69,6 +86,10 @@ model Transaction {
   
   // Salary allocation (for Gehalt splits)
   salaryAllocation   String?   // JSON string like {"Mieten": 500, "Essen": 300, ...}
+  
+  // Generated from recurring transactions
+  generatedFrom      RecurringTransaction? @relation("GeneratedFromRecurring", fields: [generatedFromId], references: [id])
+  generatedFromId    String?
   
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -103,11 +124,139 @@ model SavingsGoal {
   currentAmount      Float     @default(0)
   dueDate            DateTime?
   priority           Int       @default(0) // 0=low, 1=medium, 2=high
+  category           String?   // "vacation", "car", "house", "emergency", "retirement"
+  description        String?
+  isCompleted        Boolean   @default(false)
+  
+  // Progress tracking
+  contributions      GoalContribution[]
   
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   
   @@index([userId])
+}
+
+model GoalContribution {
+  id                 String    @id @default(cuid())
+  goalId             String
+  goal               SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  
+  amount             Float
+  date               DateTime  @default(now())
+  description        String?
+  transactionId      String?   // Link to actual transaction if applicable
+  
+  createdAt          DateTime  @default(now())
+  
+  @@index([goalId])
+}
+
+model RecurringTransaction {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  frequency          String    // "daily", "weekly", "biweekly", "monthly", "quarterly", "yearly"
+  interval           Int       @default(1) // Every X periods (e.g., every 2 weeks)
+  startDate          DateTime
+  endDate            DateTime? // Optional end date
+  nextDue            DateTime
+  lastProcessed      DateTime?
+  
+  isActive           Boolean   @default(true)
+  autoCreate         Boolean   @default(true) // Automatically create transactions
+  
+  // Transaction template data
+  type               String    // "income" or "expense"
+  amount             Float
+  category           String
+  description        String
+  
+  // Generated transactions
+  transactions       Transaction[] @relation("GeneratedTransactions")
+  generatedTransactions Transaction[] @relation("GeneratedFromRecurring")
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([nextDue])
+  @@index([isActive])
+}
+
+model Investment {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name               String    // "Apple Stocks", "Crypto Portfolio", "Real Estate"
+  type               String    // "stocks", "crypto", "bonds", "real_estate", "mutual_fund", "etf"
+  symbol             String?   // Stock ticker, crypto symbol, etc.
+  quantity           Float     // Number of shares/units
+  purchasePrice      Float    // Price per unit at purchase
+  currentPrice       Float?   // Current market price
+  currency           String    @default("EUR")
+  
+  // Portfolio grouping
+  portfolio          String?   // "Conservative", "Aggressive", "Retirement"
+  
+  // Performance tracking
+  purchaseDate       DateTime
+  lastUpdated        DateTime?
+  totalValue         Float?   // Calculated: quantity * currentPrice
+  totalCost          Float?   // Calculated: quantity * purchasePrice
+  unrealizedGain     Float?   // Calculated: totalValue - totalCost
+  
+  // Risk metrics
+  riskLevel          String?   // "low", "medium", "high"
+  expectedReturn     Float?   // Annual expected return %
+  
+  // Additional metadata
+  broker             String?   // "ING", "Comdirect", "Crypto.com", etc.
+  notes              String?
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([type])
+  @@index([portfolio])
+}
+
+model Currency {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  code               String    // "USD", "EUR", "GBP", etc.
+  name               String    // "US Dollar", "Euro", "British Pound"
+  rateToBase         Float     // Exchange rate to base currency
+  lastUpdated        DateTime  @default(now())
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@unique([userId, code])
+  @@index([userId])
+}
+
+model UserSettings {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  baseCurrency       String    @default("EUR")
+  theme              String    @default("light") // "light", "dark", "auto"
+  language           String    @default("de")
+  
+  // Notification preferences
+  emailNotifications Boolean   @default(true)
+  budgetAlerts       Boolean   @default(true)
+  goalReminders      Boolean   @default(true)
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model MoneyTip {

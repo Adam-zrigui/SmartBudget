@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
  */
 // Explicitly mark as dynamic since it reads from session/auth
 export const dynamic = 'force-dynamic';
-export const revalidate = 3600;
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,13 +21,27 @@ export async function GET(req: NextRequest) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: userId,
-        date: { gte: threeMonthsAgo },
-        type: "expense",
-      },
-    });
+    let transactions: Array<{ category: string; amount: number }> = [];
+    try {
+      transactions = await prisma.transaction.findMany({
+        where: {
+          userId: userId,
+          date: { gte: threeMonthsAgo },
+          type: "expense",
+        },
+        select: {
+          category: true,
+          amount: true,
+        },
+      });
+    } catch (dbErr: any) {
+      const code = String(dbErr?.code || "");
+      // P2021 = table missing; also handle temporary DB outages by falling back to generic tips.
+      if (code !== "P2021") {
+        console.error("GET /api/money-tips query error:", dbErr);
+      }
+      transactions = [];
+    }
 
     // Calculate spending by category
     const categorySpending: Record<string, number> = {};
@@ -42,8 +55,20 @@ export async function GET(req: NextRequest) {
       language
     );
 
-    return NextResponse.json({ recommendations });
-  } catch (err) {
+    return NextResponse.json(
+      { recommendations },
+      {
+        headers: {
+          // User-personalized response: browser-private cache only.
+          'Cache-Control': 'private, max-age=300, stale-while-revalidate=900',
+        },
+      }
+    );
+  } catch (err: any) {
+    const msg = String(err?.message || err);
+    if (msg.includes("Unauthorized")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("GET /api/money-tips error:", err);
     return NextResponse.json(
       { error: "Failed to fetch recommendations" },

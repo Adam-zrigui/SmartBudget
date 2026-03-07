@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-const config: Config = {
+const config = {
   darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
@@ -50,6 +50,6 @@ const config: Config = {
       },
     },
   },
-}
+} satisfies Config & { daisyui?: unknown }
 
 export default config

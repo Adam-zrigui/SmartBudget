@@ -12,6 +12,7 @@ import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 import { useEffect, useState } from 'react';
 import { getCat, MONTHS_DE, fmt as defaultFmt } from '@/lib/utils';
+import { authedFetch } from '@/lib/client-auth';
 
 export interface AnalyticsProps {
   inc: number;
@@ -47,7 +48,7 @@ export default function Analytics(props: Partial<AnalyticsProps>) {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch('/api/transactions');
+        const res = await authedFetch('/api/transactions');
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) setTxs(data || []);

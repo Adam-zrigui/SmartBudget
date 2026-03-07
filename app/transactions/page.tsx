@@ -3,6 +3,7 @@
 import { useState, useEffect, useId, useMemo, useCallback } from 'react';
 import { useTheme } from 'next-themes';
 import { useLanguageStore } from '@/lib/store';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import MobileDrawer from '@/components/MobileDrawer';
@@ -10,10 +11,17 @@ import Transactions from '@/components/Transactions';
 import TransactionsLoading from '@/components/TransactionsLoading';
 import Advisor from '@/components/Advisor';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { useToast } from '@/components/ui/use-toast';
+import FormModal from '@/components/FormModal';
+import DeleteModal from '@/components/DeleteModal';
+import { CATEGORIES, IC } from '@/lib/utils';
+import { authedFetch } from '@/lib/client-auth';
 
 export default function TransactionsPage() {
   const { resolvedTheme } = useTheme();
   const language = useLanguageStore((s) => s.language);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const [mounted, setMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -22,6 +30,17 @@ export default function TransactionsPage() {
   const [fMonth, setFMonth] = useState('all');
   const [fType, setFType] = useState('all');
   const [q, setQ] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [delId, setDelId] = useState<string | null>(null);
+  const [form, setForm] = useState<any>({
+    type: 'expense',
+    amount: '',
+    category: 'Lebensmittel',
+    description: '',
+    date: new Date().toISOString().slice(0, 10),
+    tag: '',
+  });
   const [chatOpen, setChatOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const popoverId = useId();
@@ -42,13 +61,17 @@ export default function TransactionsPage() {
 
   const isDark = mounted && resolvedTheme === 'dark';
 
+  const handleTabChange = (tabId: string) => {
+    router.push(`/?tab=${tabId}`);
+  };
+
   // Fetch transactions once on mount
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setIsLoading(true);
       try {
-        const res = await fetch('/api/transactions');
+        const res = await authedFetch('/api/transactions');
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
@@ -62,6 +85,104 @@ export default function TransactionsPage() {
     load();
     return () => { cancelled = true };
   }, []);
+
+  const resetForm = () => {
+    setForm({
+      type: 'expense',
+      amount: '',
+      category: 'Lebensmittel',
+      description: '',
+      date: new Date().toISOString().slice(0, 10),
+      tag: '',
+    });
+  };
+
+  const openEdit = (tx: any) => {
+    setEditId(tx.id);
+    setForm({
+      type: tx.type || 'expense',
+      amount: String(tx.amount ?? ''),
+      category: tx.category || 'Lebensmittel',
+      description: tx.description || '',
+      date: tx.date ? String(tx.date).slice(0, 10) : new Date().toISOString().slice(0, 10),
+      tag: tx.tag || '',
+    });
+    setShowForm(true);
+  };
+
+  const save = async () => {
+    const amount = Number(form.amount);
+    if (!form.description || !form.category || !form.date || !amount || amount <= 0) {
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: language === 'de' ? 'Bitte alle Felder korrekt ausfuellen.' : 'Please fill all fields correctly.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const payload = {
+      ...form,
+      amount,
+    };
+
+    try {
+      if (editId) {
+        const res = await authedFetch(`/api/transactions/${editId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`Failed to update (${res.status})`);
+        const updated = await res.json();
+        setAllTransactions((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      } else {
+        const res = await authedFetch('/api/transactions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`Failed to create (${res.status})`);
+        const created = await res.json();
+        setAllTransactions((prev) => [created, ...prev]);
+      }
+
+      setShowForm(false);
+      setEditId(null);
+      resetForm();
+      toast({
+        title: editId
+          ? (language === 'de' ? 'Buchung aktualisiert' : 'Transaction updated')
+          : (language === 'de' ? 'Buchung erstellt' : 'Transaction created'),
+      });
+    } catch (err) {
+      console.error('save transaction error', err);
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: language === 'de' ? 'Buchung konnte nicht gespeichert werden.' : 'Could not save transaction.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const del = async (id: string) => {
+    try {
+      const res = await authedFetch(`/api/transactions/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Failed to delete (${res.status})`);
+      setAllTransactions((prev) => prev.filter((t) => t.id !== id));
+      setDelId(null);
+      toast({
+        title: language === 'de' ? 'Buchung geloescht' : 'Transaction deleted',
+      });
+    } catch (err) {
+      console.error('delete transaction error', err);
+      toast({
+        title: language === 'de' ? 'Fehler' : 'Error',
+        description: language === 'de' ? 'Buchung konnte nicht geloescht werden.' : 'Could not delete transaction.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Memoize filter functions to prevent unnecessary re-renders
   const setFTypeCallback = useCallback((type: string) => setFType(type), []);
@@ -113,11 +234,11 @@ export default function TransactionsPage() {
         taxResult={{}}
         txsLength={filtered.length}
         tab="transactions"
-        setTab={() => {}}
+        setTab={handleTabChange}
       />
 
       <div className="hidden lg:flex lg:shrink-0">
-        <Sidebar taxResult={{}} txsLength={filtered.length} tab="transactions" setTab={() => {}} />
+        <Sidebar taxResult={{}} txsLength={filtered.length} tab="transactions" setTab={handleTabChange} />
       </div>
 
       <div className="flex flex-col flex-1 min-w-0">
@@ -139,8 +260,8 @@ export default function TransactionsPage() {
                 setFType={setFTypeCallback}
                 q={q}
                 setQ={setQCallback}
-                openEdit={() => {}}
-                setDelId={() => {}}
+                openEdit={openEdit}
+                setDelId={setDelId}
               />
             </div>
           </main>
@@ -170,6 +291,18 @@ export default function TransactionsPage() {
           </PopoverContent>
         </Popover>
       </div>
+      <FormModal
+        showForm={showForm}
+        form={form}
+        setForm={setForm}
+        cur="EUR"
+        save={save}
+        setShowForm={setShowForm}
+        editId={editId}
+        CATEGORIES={CATEGORIES}
+        IC={IC}
+      />
+      {delId && <DeleteModal delId={delId} setDelId={setDelId} del={del} />}
     </div>
   );
 }

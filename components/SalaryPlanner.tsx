@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguageStore } from '@/lib/store';
 import { fmt } from '@/lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { authedFetch } from '@/lib/client-auth';
 
 export default function SalaryPlanner({
   txs,
@@ -59,10 +60,9 @@ export default function SalaryPlanner({
 
     setIsSaving(true);
     try {
-      const res = await fetch('/api/transactions', {
+      const res = await authedFetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           type: 'income',
           category: 'Gehalt',

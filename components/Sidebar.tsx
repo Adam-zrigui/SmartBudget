@@ -7,6 +7,7 @@ import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { authedFetch } from "@/lib/client-auth";
 
 export interface SidebarProps {
   taxResult: any;
@@ -20,6 +21,11 @@ const TABS = [
   { id: "dashboard", ic: IC.dash },
   { id: "transactions", ic: IC.list },
   { id: "analytics", ic: IC.chart },
+  { id: "budget", ic: IC.budget },
+  { id: "goals", ic: IC.goals },
+  { id: "recurring", ic: IC.recurring },
+  { id: "investments", ic: IC.investments },
+  { id: "currency", ic: IC.currency },
   { id: "tax", ic: IC.tax },
   { id: "advisor", ic: IC.chat },
   { id: "profile", ic: IC.user },
@@ -55,7 +61,7 @@ export default function Sidebar({
     (async () => {
       try {
         if (taxResult && taxResult.netMonthly > 0) return;
-        const res = await fetch('/api/transactions?type=income');
+        const res = await authedFetch('/api/transactions?type=income');
         if (!res.ok) return;
         const data = await res.json();
         const months: Record<string, number> = {};
@@ -107,7 +113,7 @@ export default function Sidebar({
           const tabHint = translations[language].sidebar.tabs[tabItem.id]?.hint || '';
           
           // Routes for page-based navigation
-          const pageRoutes = ['dashboard', 'transactions', 'analytics', 'tax', 'advisor', 'profile'];
+          const pageRoutes = ['dashboard', 'transactions', 'analytics', 'budget', 'goals', 'recurring', 'investments', 'currency', 'tax', 'advisor', 'profile'];
           const isPageRoute = pageRoutes.includes(tabItem.id);
           
           // Check if current route matches tab
@@ -260,4 +266,3 @@ export default function Sidebar({
     </aside>
   );
 }
-

@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
-import { ThemeProvider } from '@/components/theme-provider'
 import Providers from '@/components/Providers'
 
 const geist = Geist({ subsets: ["latin"], variable: '--font-geist' });
@@ -23,6 +22,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://smartbudget.app'),
+  alternates: {
+    canonical: '/',
+  },
   title: {
     default: 'SmartBudget - Intelligent Personal Finance Management',
     template: '%s | SmartBudget'
@@ -36,6 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
+    alternateLocale: ['de_DE'],
     url: 'https://smartbudget.app',
     siteName: 'SmartBudget',
     title: 'SmartBudget - Intelligent Personal Finance Management',
@@ -54,6 +57,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SmartBudget - Intelligent Personal Finance Management',
     description: 'AI-powered personal finance management platform',
+    site: '@smartbudget',
     creator: '@smartbudget',
     images: ['/og-image.png'],
   },
@@ -95,25 +99,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable}`}>
       <head>
-        <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SmartBudget" />
         <meta name="msapplication-TileColor" content="#2d2d2d" />
         <link rel="alternate" hrefLang="en" href="https://smartbudget.app" />
         <link rel="alternate" hrefLang="de" href="https://smartbudget.app/de" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://cdn.example.com" />
-        {/* Prefetch next important routes to improve navigations */}
-        <link rel="prefetch" href="/transactions" as="document" />
-        <link rel="prefetch" href="/analytics" as="document" />
-        <link rel="prefetch" href="/tax" as="document" />
-        <link rel="prefetch" href="/advisor" as="document" />
-        {/* Preload main social image for rich link previews and faster LCP on social shares */}
-        <link rel="preload" href="/og-image.png" as="image" />
+        {/* Preload social image to reduce preview/LCP latency when first requested */}
+        <link rel="preload" href="/og-image.png" as="image" type="image/png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -128,11 +122,6 @@ export default function RootLayout({
                 '@type': 'Offer',
                 price: '0',
                 priceCurrency: 'USD'
-              },
-              aggregateRating: {
-                '@type': 'AggregateRating',
-                ratingValue: '4.8',
-                ratingCount: '1200'
               }
             })
           }}

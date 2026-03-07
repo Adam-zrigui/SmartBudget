@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import { authedFetch } from "@/lib/client-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +37,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/transactions/export?format=${format}`);
+      const response = await authedFetch(`/api/transactions/export?format=${format}`);
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -58,7 +59,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
   
   const TABS: Record<string, { label: string; description: string }> = {
     dashboard: { 
-      label: language === 'de' ? "Übersicht" : "Overview", 
+      label: language === 'de' ? "Uebersicht" : "Overview", 
       description: language === 'de' ? "Finanzen auf einen Blick" : "Finance at a glance" 
     },
     transactions: { 
@@ -71,11 +72,11 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
     },
     tax: { 
       label: language === 'de' ? "Steuer" : "Tax", 
-      description: language === 'de' ? "Brutto–Netto-Rechner 2024" : "Gross/Net Calculator 2024" 
+      description: language === 'de' ? "Brutto-Netto-Rechner 2024" : "Gross/Net Calculator 2024" 
     },
     advisor: { 
       label: language === 'de' ? "Berater" : "Advisor", 
-      description: language === 'de' ? "KI-gestützte Finanzberatung" : "AI-powered financial advice" 
+      description: language === 'de' ? "KI-gestuetzte Finanzberatung" : "AI-powered financial advice" 
     },
     profile: { 
       label: language === 'de' ? "Profil" : "Profile", 
@@ -108,7 +109,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
           <button
             onClick={() => onHamburger ? onHamburger() : undefined}
             className="btn btn-ghost btn-sm btn-square lg:hidden p-2"
-            aria-label="Menü öffnen"
+            aria-label="Menue oeffnen"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -131,7 +132,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
         {/* Desktop Pill badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-base-200 rounded-full text-xs opacity-60 font-medium hover:opacity-80 hover:shadow-md transition-all duration-200">
           <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
-          {txsLength} {language === 'de' ? 'Buchungen' : 'Entries'} · {language === 'de' ? 'Feb 2026' : 'Feb 2026'}
+          {txsLength} � {language === 'de' ? 'Feb 2026' : 'Feb 2026'}
         </div>
 
         {/* Actions - Better mobile spacing */}
@@ -214,3 +215,4 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
     </header>
   );
 }
+
