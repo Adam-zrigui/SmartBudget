@@ -15,6 +15,20 @@ function normalizePrivateKey(raw?: string): string | undefined {
 
   // Support escaped newline format from .env files.
   key = key.replace(/\\n/g, '\n');
+
+  // Some providers store multiline secrets as base64.
+  // If this does not look like a PEM key, try base64-decoding once.
+  if (!key.includes('BEGIN PRIVATE KEY')) {
+    try {
+      const decoded = Buffer.from(key, 'base64').toString('utf8').trim();
+      if (decoded.includes('BEGIN PRIVATE KEY')) {
+        key = decoded;
+      }
+    } catch {
+      // Keep original value if base64 decode fails.
+    }
+  }
+
   return key;
 }
 

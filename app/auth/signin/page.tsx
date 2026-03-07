@@ -44,16 +44,25 @@ function SignInContent() {
       // and verify by making a small request
       await new Promise((r) => setTimeout(r, 200));
       
-      // Verify token is accessible before redirecting
+      // Verify token is accessible before redirecting.
+      // In production, do not continue if verification fails,
+      // otherwise the app lands in repeated 401 API loops.
       try {
         const verifyRes = await fetch('/api/auth/verify', {
           credentials: 'include',
         });
         if (!verifyRes.ok) {
-          console.warn('Token verification failed, but proceeding with redirect');
+          const verifyText = await verifyRes.text();
+          console.error('Token verification failed:', verifyText);
+          throw new Error(
+            language === 'de'
+              ? 'Anmeldung unvollstaendig. Bitte Firebase-Server-Konfiguration pruefen.'
+              : 'Sign-in incomplete. Please check Firebase server configuration.'
+          );
         }
       } catch (e) {
-        console.warn('Could not verify token:', e);
+        console.error('Could not verify token:', e);
+        throw e instanceof Error ? e : new Error('Token verification failed');
       }
 
       console.log('callbackUrl', callbackUrl);
