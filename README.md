@@ -89,7 +89,7 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/smartbudget.git
+   git clone https://github.com/Adam-zrigui/smartbudget.git
    cd smartbudget
    ```
 
@@ -263,14 +263,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Prisma** for the excellent ORM
 - **Tailwind CSS** for the utility-first approach
 - **OpenAI** for AI capabilities
-
-## 📞 Support
-
-If you have any questions or need help:
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/smartbudget/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/smartbudget/discussions)
-- **Email**: support@smartbudget.app
 
 ## 🔄 Changelog
 
