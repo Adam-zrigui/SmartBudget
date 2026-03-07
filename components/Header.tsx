@@ -89,6 +89,16 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
       .replace(/-/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const toHydrationSafeAscii = (value: string) =>
+    String(value || '')
+      .replace(/Ä/g, 'Ae')
+      .replace(/Ö/g, 'Oe')
+      .replace(/Ü/g, 'Ue')
+      .replace(/ä/g, 'ae')
+      .replace(/ö/g, 'oe')
+      .replace(/ü/g, 'ue')
+      .replace(/ß/g, 'ss');
+
   const fallbackLabel = humanize(tab || (pathname?.split('/').pop() || ''));
 
   const current =
@@ -96,6 +106,11 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
     (tab === 'new'
       ? { label: language === 'de' ? t.header.newEntry : t.header.newEntry, description: '' }
       : { label: fallbackLabel, description: '' });
+
+  // Prevent server/client text drift by rendering a deterministic ASCII snapshot
+  // until mounted. After mount, localized strings (including umlauts) are shown.
+  const safeLabel = mounted ? current.label : toHydrationSafeAscii(current.label);
+  const safeDescription = mounted ? current.description : toHydrationSafeAscii(current.description);
 
   // hide hamburger only for authentication screens (sidebar not present)
   const noSidebarRoutes = ['/auth', '/login'];
@@ -109,7 +124,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
           <button
             onClick={() => onHamburger ? onHamburger() : undefined}
             className="btn btn-ghost btn-sm btn-square lg:hidden p-2"
-            aria-label="Menue oeffnen"
+            aria-label={mounted ? "Menü öffnen" : "Menue oeffnen"}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -119,8 +134,8 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
 
         {/* Title block - More compact on mobile */}
         <div className="flex-1 min-w-0">
-          <h1 className="text-sm sm:text-base font-bold tracking-tight leading-none truncate">{current.label}</h1>
-          <p className="text-xs opacity-40 mt-0.5 truncate hidden sm:block">{current.description}</p>
+          <h1 className="text-sm sm:text-base font-bold tracking-tight leading-none truncate">{safeLabel}</h1>
+          <p className="text-xs opacity-40 mt-0.5 truncate hidden sm:block">{safeDescription}</p>
         </div>
 
         {/* Mobile transaction count */}

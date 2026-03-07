@@ -141,6 +141,21 @@ export default function Advisor({ compact, onClose, focus }: { compact?: boolean
     return () => window.removeEventListener('ai:plan', onPlan as EventListener);
   }, []);
 
+  // Receive quick prompts from dashboard CTA buttons.
+  useEffect(() => {
+    function onQuickPrompt(e: any) {
+      const prompt = String(e?.detail?.prompt || '').trim();
+      if (!prompt) return;
+      setInput(prompt);
+      setTimeout(() => {
+        const el = containerRef.current?.querySelector('input') as HTMLInputElement | null;
+        el?.focus();
+      }, 80);
+    }
+    window.addEventListener('ai:quickPrompt', onQuickPrompt as EventListener);
+    return () => window.removeEventListener('ai:quickPrompt', onQuickPrompt as EventListener);
+  }, []);
+
   // focus input when requested (e.g., popover opened)
   useEffect(() => {
     if (focus) {
