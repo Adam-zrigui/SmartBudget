@@ -4,9 +4,12 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import Providers from '@/components/Providers'
+import { getSiteUrl } from '@/lib/site-url'
 
 const geist = Geist({ subsets: ["latin"], variable: '--font-geist' });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-geist-mono' });
+
+const siteUrl = getSiteUrl();
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -21,7 +24,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://smartbudget.app'),
+  metadataBase: new URL(siteUrl),
   alternates: {
     canonical: '/',
   },
@@ -31,7 +34,7 @@ export const metadata: Metadata = {
   },
   description: 'AI-powered personal finance management platform. Track expenses, analyze spending patterns, and get smart financial insights.',
   keywords: ['finance', 'budget', 'expense tracker', 'personal finance', 'AI advisor', 'financial planning'],
-  authors: [{ name: 'SmartBudget', url: 'https://smartbudget.app' }],
+  authors: [{ name: 'SmartBudget', url: siteUrl }],
   creator: 'SmartBudget',
   publisher: 'SmartBudget',
   formatDetection: { email: false, telephone: false, address: false },
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     alternateLocale: ['de_DE'],
-    url: 'https://smartbudget.app',
+    url: siteUrl,
     siteName: 'SmartBudget',
     title: 'SmartBudget - Intelligent Personal Finance Management',
     description: 'AI-powered personal finance management platform with smart insights and financial planning.',
@@ -104,8 +107,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SmartBudget" />
         <meta name="msapplication-TileColor" content="#2d2d2d" />
-        <link rel="alternate" hrefLang="en" href="https://smartbudget.app" />
-        <link rel="alternate" hrefLang="de" href="https://smartbudget.app/de" />
+        <link rel="alternate" hrefLang="en" href={siteUrl} />
+        <link rel="alternate" hrefLang="de" href={`${siteUrl}/de`} />
         {/* Preload social image to reduce preview/LCP latency when first requested */}
         <link rel="preload" href="/og-image.png" as="image" type="image/png" />
         <script
@@ -116,7 +119,7 @@ export default function RootLayout({
               '@type': 'WebApplication',
               name: 'SmartBudget',
               description: 'Intelligent personal finance management platform with AI insights',
-              url: 'https://smartbudget.app',
+              url: siteUrl,
               applicationCategory: 'FinanceApplication',
               offers: {
                 '@type': 'Offer',

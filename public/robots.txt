@@ -12,9 +12,9 @@ Crawl-delay: 1
 User-agent: Googlebot
 Crawl-delay: 0
 
-# Sitemaps
-Sitemap: https://smartbudget.app/sitemap.xml
-Sitemap: https://smartbudget.app/sitemap-index.xml
+# Sitemaps (fallback static file; dynamic /robots.txt is generated from app/robots.ts)
+Sitemap: https://smart-budget-rho.vercel.app/sitemap.xml
+Sitemap: https://smart-budget-rho.vercel.app/sitemap-index.xml
 
 # Common bot rules
 User-agent: AdsBot-Google

@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.SITE_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 const nextConfig = {
   // Strict mode for better error detection
   reactStrictMode: true,
@@ -144,7 +149,7 @@ const nextConfig = {
 
   // Environment variables
   env: {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://smartbudget.app',
+    NEXT_PUBLIC_APP_URL: appUrl,
   },
 
   // Turbopack configuration for Next.js 16
