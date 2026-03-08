@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useId, useMemo, useCallback } from 'react';
 import { useTheme } from 'next-themes';
@@ -33,6 +33,7 @@ export default function TransactionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState<any>({
     type: 'expense',
     amount: '',
@@ -115,7 +116,7 @@ export default function TransactionsPage() {
     if (!form.description || !form.category || !form.date || !amount || amount <= 0) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Bitte alle Felder korrekt ausfuellen.' : 'Please fill all fields correctly.',
+        description: language === 'de' ? 'Bitte alle Felder korrekt ausfüllen.' : 'Please fill all fields correctly.',
         variant: 'destructive',
       });
       return;
@@ -166,21 +167,26 @@ export default function TransactionsPage() {
   };
 
   const del = async (id: string) => {
+    if (!id || deletingId === id) return;
+    setDeletingId(id);
     try {
       const res = await authedFetch(`/api/transactions/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`Failed to delete (${res.status})`);
+      // Idempotent behavior: treat already-deleted entries as success.
+      if (!res.ok && res.status !== 404) throw new Error(`Failed to delete (${res.status})`);
       setAllTransactions((prev) => prev.filter((t) => t.id !== id));
       setDelId(null);
       toast({
-        title: language === 'de' ? 'Buchung geloescht' : 'Transaction deleted',
+        title: language === 'de' ? 'Buchung gelöscht' : 'Transaction deleted',
       });
     } catch (err) {
       console.error('delete transaction error', err);
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Buchung konnte nicht geloescht werden.' : 'Could not delete transaction.',
+        description: language === 'de' ? 'Buchung konnte nicht gelöscht werden.' : 'Could not delete transaction.',
         variant: 'destructive',
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -262,6 +268,7 @@ export default function TransactionsPage() {
                 setQ={setQCallback}
                 openEdit={openEdit}
                 setDelId={setDelId}
+                deletingId={deletingId}
               />
             </div>
           </main>
@@ -302,7 +309,16 @@ export default function TransactionsPage() {
         CATEGORIES={CATEGORIES}
         IC={IC}
       />
-      {delId && <DeleteModal delId={delId} setDelId={setDelId} del={del} />}
+      {delId && (
+        <DeleteModal
+          delId={delId}
+          setDelId={setDelId}
+          del={del}
+          isDeleting={deletingId === delId}
+          language={language}
+        />
+      )}
     </div>
   );
 }
+

@@ -1,13 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import { getSiteUrl } from '@/lib/site-url'
-
-const geist = Geist({ subsets: ["latin"], variable: '--font-geist' });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-geist-mono' });
 
 const siteUrl = getSiteUrl();
 
@@ -100,7 +96,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${geist.variable} ${geistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

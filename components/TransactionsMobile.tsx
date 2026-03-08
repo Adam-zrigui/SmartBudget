@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { fmt, getCat, TAG, MONTHS_DE } from "@/lib/utils";
 import { useLanguageStore } from "@/lib/store";
@@ -17,6 +17,7 @@ export interface TransactionsProps {
   setQ: (q: string) => void;
   openEdit: (t: any) => void;
   setDelId: (id: string | null) => void;
+  deletingId?: string | null;
 }
 
 const calculateNetAmount = (transaction: any) => {
@@ -30,7 +31,7 @@ const calculateNetAmount = (transaction: any) => {
 };
 
 // Mobile Transaction Card Component
-const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur, fmt }: {
+const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur, fmt, deletingId }: {
   transaction: any;
   onEdit: (t: any) => void;
   onDelete: (id: string) => void;
@@ -38,6 +39,7 @@ const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur
   tr: any;
   cur: string;
   fmt: (v: number, cur?: string) => string;
+  deletingId?: string | null;
 }) => {
   const ct = getCat(transaction.category) || { color: "#9ca3af", icon: "" };
   const tagInfo = transaction.tag ? (TAG as any)[transaction.tag] : null;
@@ -64,7 +66,7 @@ const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur
         </div>
         <div className="flex items-center gap-2 ml-2">
           <span className={`text-base font-bold tabular-nums ${transaction.type === 'income' ? 'text-success' : 'text-error'}`}>
-            {transaction.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(transaction), cur)}
+            {transaction.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(transaction), cur)}
           </span>
           <button
             className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity p-1"
@@ -72,9 +74,10 @@ const TransactionCard = memo(({ transaction, onEdit, onDelete, language, tr, cur
               e.stopPropagation();
               onDelete(transaction.id);
             }}
-            aria-label="Delete transaction"
+            aria-label={language === 'de' ? 'Buchung löschen' : 'Delete transaction'}
+            disabled={Boolean(deletingId)}
           >
-            🗑️
+            {deletingId === transaction.id ? '...' : '×'}
           </button>
         </div>
       </div>
@@ -138,6 +141,7 @@ export default memo(function Transactions({
   setQ,
   openEdit,
   setDelId,
+  deletingId = null,
 }: TransactionsProps) {
   const language = useLanguageStore((s) => s.language);
   const tr = translations[language];
@@ -160,7 +164,7 @@ export default memo(function Transactions({
             </svg>
             <input
               type="text"
-              placeholder={language === 'de' ? 'Suchen…' : 'Search…'}
+              placeholder={language === 'de' ? 'Suchen...' : 'Search...'}
               value={q}
               onChange={(e) => setQ(e.target.value)}
               className="input input-bordered input-sm w-full pl-9 text-sm focus:ring-2 focus:ring-primary/50 transition-all duration-200"
@@ -204,7 +208,7 @@ export default memo(function Transactions({
 
             {/* Balance badge - Right aligned */}
             <div className={`ml-auto text-sm font-bold px-3 py-2 rounded-lg transition-all duration-300 shadow-sm ${bal >= 0 ? 'bg-success/10 text-success hover:shadow-md' : 'bg-error/10 text-error hover:shadow-md'}`}>
-              {bal >= 0 ? '+' : ''}{fmt(bal, cur)}
+              {bal >= 0 ? '+' : '-'}{fmt(bal, cur)}
             </div>
           </div>
         </div>
@@ -219,7 +223,7 @@ export default memo(function Transactions({
               className="text-xs opacity-40 hover:opacity-70 transition-opacity hover:scale-105 active:scale-95 transform"
               onClick={() => setQ("")}
             >
-              ✗ {language === 'de' ? 'Filter zurücksetzen' : 'Reset Filter'}
+              × {language === 'de' ? 'Filter zurücksetzen' : 'Reset Filter'}
             </button>
           )}
         </div>
@@ -241,11 +245,15 @@ export default memo(function Transactions({
                   key={t.id}
                   transaction={t}
                   onEdit={openEdit}
-                  onDelete={setDelId}
+                  onDelete={(id) => {
+                    if (deletingId) return;
+                    setDelId(id);
+                  }}
                   language={language}
                   tr={tr}
                   cur={cur}
                   fmt={fmt}
+                  deletingId={deletingId}
                 />
               ))}
             </div>
@@ -259,18 +267,15 @@ export default memo(function Transactions({
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3">{language === 'de' ? 'Beschreibung' : 'Description'}</th>
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3">{language === 'de' ? 'Kategorie' : 'Category'}</th>
                     <th className="bg-base-100 text-xs font-semibold opacity-40 uppercase tracking-wider py-3 text-right">{language === 'de' ? 'Betrag' : 'Amount'}</th>
-                    <th className="bg-base-100 w-16" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((t) => {
-                    const ct = getCat(t.category) || { color: "#9ca3af", icon: "" };
-                    const tagInfo = t.tag ? (TAG as any)[t.tag] : null;
-                    const statusLabel = t.employmentStatus
-                      ? ((tr.form as any)?.employmentStatus?.[t.employmentStatus] || t.employmentStatus)
-                      : '';
+                    <th className="bg-base-100 w-28" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((t) => {
+                  const ct = getCat(t.category) || { color: "#9ca3af", icon: "" };
+                  const tagInfo = t.tag ? (TAG as any)[t.tag] : null;
 
-                    return (
+                  return (
                       <tr
                         key={t.id}
                         className="border-b border-base-200 last:border-0 hover:bg-base-200/50 transition-all duration-300 group animate-in fade-in slide-in-from-left-2"
@@ -311,7 +316,7 @@ export default memo(function Transactions({
                         <td className="py-3 text-right">
                           <div className="group relative">
                             <span className={`text-sm font-bold tabular-nums transition-all duration-200 cursor-help ${t.type === 'income' ? 'text-success group-hover:text-success/80' : 'text-error group-hover:text-error/80'}`}>
-                              {t.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(t), cur)}
+                              {t.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(t), cur)}
                             </span>
                             {/* Tax Breakdown Tooltip */}
                             {(t.vat || t.churchTax) && (
@@ -339,7 +344,7 @@ export default memo(function Transactions({
                                       <div className="flex justify-between gap-4 font-semibold">
                                         <span>{language === 'de' ? 'Netto:' : 'Net:'}</span>
                                         <span className={t.type === 'income' ? 'text-success' : 'text-error'}>
-                                          {t.type === 'income' ? '+' : '−'}{fmt(calculateNetAmount(t), cur)}
+                                          {t.type === 'income' ? '+' : '-'}{fmt(calculateNetAmount(t), cur)}
                                         </span>
                                       </div>
                                     </div>
@@ -347,6 +352,27 @@ export default memo(function Transactions({
                                 </div>
                               </div>
                             )}
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs"
+                              onClick={() => openEdit(t)}
+                              aria-label={language === 'de' ? 'Buchung bearbeiten' : 'Edit transaction'}
+                            >
+                              {language === 'de' ? 'Bearbeiten' : 'Edit'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-xs text-error"
+                              onClick={() => !deletingId && setDelId(t.id)}
+                              aria-label={language === 'de' ? 'Buchung löschen' : 'Delete transaction'}
+                              disabled={Boolean(deletingId)}
+                            >
+                              {deletingId === t.id ? (language === 'de' ? 'Löschen...' : 'Deleting...') : (language === 'de' ? 'Löschen' : 'Delete')}
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -361,3 +387,5 @@ export default memo(function Transactions({
     </div>
   );
 });
+
+

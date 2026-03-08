@@ -97,7 +97,7 @@ If you see `Failed to parse private key`, fix `FIREBASE_PRIVATE_KEY` formatting 
 pnpm dev              # start dev server
 pnpm build            # prisma generate + next build + sitemap
 pnpm start            # start production server
-pnpm lint             # run eslint
+pnpm lint             # run TypeScript static checks
 pnpm analyze          # bundle analysis build
 pnpm bundle:analyze   # generate bundle analysis report
 pnpm perf             # run performance benchmark script
@@ -111,6 +111,24 @@ pnpm optimize         # build + bundle analysis
 - Set `NEXT_PUBLIC_APP_URL` and `SITE_URL` to your live domain.
 - Set `ALLOW_DEV_AUTH_BYPASS=false`.
 - Run `pnpm build` successfully before deploy.
+- Ensure route-guard file is `proxy.ts` (not deprecated `middleware.ts`).
+
+## Pre-Deploy Validation
+Run these checks before every production deployment:
+
+```bash
+pnpm lint
+pnpm build
+```
+
+Manual smoke test (production URL):
+- Sign in with Firebase and confirm session persists after refresh.
+- Create, edit, and delete a transaction once (no duplicate delete errors).
+- Create a budget and savings goal.
+- Load `/recurring`, `/investments`, and `/currency` without `401`/`500`.
+- Confirm dashboard renders salary allocation chart and details card once (no duplicate block).
+
+If API requests return `401` in production, verify Firebase Admin variables first, especially `FIREBASE_PRIVATE_KEY` newline escaping.
 
 ## Deployment
 ### Vercel

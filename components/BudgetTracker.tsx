@@ -1,4 +1,5 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useState, useMemo, useEffect, useId } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useTheme } from 'next-themes';
@@ -23,7 +24,6 @@ import {
 import Sidebar from "./Sidebar";
 import MobileDrawer from "./MobileDrawer";
 import Header from "./Header";
-import Dashboard from "./Dashboard";
 import Transactions from "./Transactions";
 import Analytics from "./Analytics";
 import Tax from "./Tax";
@@ -39,6 +39,11 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import FormModal from "./FormModal";
 import DeleteModal from "./DeleteModal";
 import Toast from "./Toast";
+
+const Dashboard = dynamic(() => import("./Dashboard"), {
+  ssr: false,
+  loading: () => <div className="h-80 bg-base-200/40 rounded-2xl animate-pulse" />,
+});
 
 export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab?: string }) {
   // Prefetch all API data in the background for faster page switches
@@ -845,6 +850,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     fMonth, setFMonth, fType, setFType, q, setQ,
     form, setForm, editId, setEditId, delId, setDelId,
     filtered, inc, exp, bal, svRate, byCat, monthly,
+    txs,
     fmt, taxResult, tax, setTax, notify, openEdit, save, del, exportCSV,
     showForm, setShowForm, IC, toast,
     DE_TAX_CLASSES, DE_STATES, CATEGORIES, MONTHS_DE,

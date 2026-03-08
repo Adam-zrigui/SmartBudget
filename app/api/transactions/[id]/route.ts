@@ -57,15 +57,18 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-    try {
+  try {
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
 
     const { id } = await params;
 
-    // Verify user owns this transaction
+    // Verify ownership; if already deleted, treat as idempotent success.
     const existing = await prisma.transaction.findUnique({ where: { id } });
-    if (!existing || existing.userId !== userId) {
+    if (!existing) {
+      return NextResponse.json({ success: true, alreadyDeleted: true });
+    }
+    if (existing.userId !== userId) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

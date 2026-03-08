@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
         vat: true,
         churchTax: true,
         employmentStatus: true,
+        salaryAllocation: true,
       },
       orderBy: { date: "desc" },
     });
@@ -65,20 +66,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('[POST /api/transactions] Request received');
-    
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
-    console.log('[POST] Firebase user:', userId);
 
     const body = await req.json();
-    console.log('[POST] Request body:', JSON.stringify(body, null, 2));
     
     const { type, amount, category, description, date, tag, bundesland, vat, churchTax, applyChurchTax, municipalTaxRange, employmentStatus, taxClass, hasKinder, salaryAllocation } = body;
 
     if (!type || !amount || !category || !description || !date) {
-      console.log('[POST] Validation failed - missing required fields');
-      console.log('[POST] type:', type, 'amount:', amount, 'category:', category, 'description:', description, 'date:', date);
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -104,18 +99,15 @@ export async function POST(req: NextRequest) {
       salaryAllocation: salaryAllocation ? JSON.stringify(salaryAllocation) : null,
     };
     
-    console.log('[POST] Creating transaction with data:', JSON.stringify(transactionData, null, 2));
-
     const transaction = await prisma.transaction.create({
       data: transactionData,
     });
 
-    console.log('[POST] Transaction created successfully, ID:', transaction.id);
     return NextResponse.json(transaction, { status: 201 });
   } catch (err) {
-    console.error('[POST /api/transactions] Error:', err);
+    console.error('POST /api/transactions error:', err);
     return NextResponse.json(
-      { error: "Failed to create transaction", details: String(err) },
+      { error: "Failed to create transaction" },
       { status: 500 }
     );
   }
