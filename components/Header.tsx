@@ -128,11 +128,8 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
           <button
             onClick={() => onHamburger ? onHamburger() : undefined}
             className="btn btn-ghost btn-sm btn-square lg:hidden p-2"
-<<<<<<< HEAD
-            aria-label="Men\u00FC \u00F6ffnen"
-=======
-            aria-label={mounted ? "Menü öffnen" : "Menue oeffnen"}
->>>>>>> 013bff718920b2895a2f1646722f75df6532b9c2
+            aria-label="Menü öffnen"
+            suppressHydrationWarning
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
