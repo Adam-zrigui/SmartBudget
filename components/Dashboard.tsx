@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 const ChartArea = dynamic(() => import('./ChartArea'), { ssr: false, loading: () => <div className="h-48 skeleton-pulse rounded-md" /> });
+import { useEffect, useMemo, useState } from 'react';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
 
@@ -19,6 +20,9 @@ export interface DashboardProps {
   dark: boolean;
   fmt: (v: number, cur?: string) => string;
   MONTHS_DE: string[];
+  txs?: any[];
+  savingsGoals?: any[];
+  setTab?: (tab: string) => void;
 }
 
 const KpiCard = ({
@@ -67,9 +71,104 @@ export default function Dashboard({
   dark,
   fmt,
   MONTHS_DE,
+  txs = [],
+  savingsGoals = [],
+  setTab,
 }: DashboardProps) {
   const language = useLanguageStore((s) => s.language);
   const t = translations[language];
+  const [autopilotPercent, setAutopilotPercent] = useState(15);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+
+  const activeGoals = useMemo(
+    () =>
+      (Array.isArray(savingsGoals) ? savingsGoals : []).filter(
+        (g: any) => Number(g?.targetAmount || 0) > Number(g?.currentAmount || 0)
+      ),
+    [savingsGoals]
+  );
+
+  useEffect(() => {
+    if (!selectedGoalId && activeGoals[0]?.id) {
+      setSelectedGoalId(activeGoals[0].id);
+    }
+  }, [activeGoals, selectedGoalId]);
+
+  const weeklyStats = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - 6);
+
+    const inWindow = (Array.isArray(txs) ? txs : []).filter((tx: any) => {
+      const d = new Date(tx.date);
+      return d >= start && d <= today;
+    });
+
+    const activeDays = new Set(
+      inWindow.map((tx: any) => new Date(tx.date).toISOString().slice(0, 10))
+    ).size;
+    const weekIncome = inWindow
+      .filter((tx: any) => tx.type === 'income')
+      .reduce((s: number, tx: any) => s + Number(tx.amount || 0), 0);
+    const weekExpense = inWindow
+      .filter((tx: any) => tx.type === 'expense')
+      .reduce((s: number, tx: any) => s + Number(tx.amount || 0), 0);
+    const weekNet = weekIncome - weekExpense;
+
+    let streakWeeks = 0;
+    for (let w = 0; w < 8; w += 1) {
+      const end = new Date(today);
+      end.setDate(today.getDate() - w * 7);
+      const begin = new Date(end);
+      begin.setDate(end.getDate() - 6);
+      const wtx = (Array.isArray(txs) ? txs : []).filter((tx: any) => {
+        const d = new Date(tx.date);
+        return d >= begin && d <= end;
+      });
+      const wi = wtx
+        .filter((tx: any) => tx.type === 'income')
+        .reduce((s: number, tx: any) => s + Number(tx.amount || 0), 0);
+      const we = wtx
+        .filter((tx: any) => tx.type === 'expense')
+        .reduce((s: number, tx: any) => s + Number(tx.amount || 0), 0);
+      if (wi - we > 0) streakWeeks += 1;
+      else break;
+    }
+
+    const score = Math.max(
+      0,
+      Math.min(100, Math.round(activeDays * 8 + (weekNet > 0 ? 45 : 20)))
+    );
+
+    return { activeDays, weekIncome, weekExpense, weekNet, streakWeeks, score };
+  }, [txs]);
+
+  const autopilot = useMemo(() => {
+    const now = new Date();
+    const monthTx = (Array.isArray(txs) ? txs : []).filter((tx: any) => {
+      const d = new Date(tx.date);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const monthSalary = monthTx
+      .filter((tx: any) => tx.type === 'income' && String(tx.category || '').toLowerCase() === 'gehalt')
+      .reduce((s: number, tx: any) => s + Number(tx.amount || 0), 0);
+
+    const selectedGoal = activeGoals.find((g: any) => g.id === selectedGoalId) || activeGoals[0];
+    const target = Number(selectedGoal?.targetAmount || 0);
+    const current = Number(selectedGoal?.currentAmount || 0);
+    const remaining = Math.max(0, target - current);
+    const monthlyContribution = (monthSalary * autopilotPercent) / 100;
+    const monthsToGoal = monthlyContribution > 0 ? Math.ceil(remaining / monthlyContribution) : null;
+
+    return { monthSalary, selectedGoal, remaining, monthlyContribution, monthsToGoal };
+  }, [activeGoals, autopilotPercent, selectedGoalId, txs]);
+
+  function runQuickPrompt(prompt: string) {
+    setTab?.('advisor');
+    window.dispatchEvent(
+      new CustomEvent('ai:quickPrompt', { detail: { prompt } })
+    );
+  }
   
   const colors = {
     border: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
@@ -172,6 +271,121 @@ export default function Dashboard({
             progressColor={svRate >= 20 ? 'bg-success' : svRate >= 0 ? 'bg-warning' : 'bg-error'}
             accent
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold">
+              {language === 'de' ? 'Woechentliche Dynamik' : 'Weekly Momentum'}
+            </div>
+            <span className="text-xs opacity-60">
+              {language === 'de' ? 'Streak' : 'Streak'}: {weeklyStats.streakWeeks}w
+            </span>
+          </div>
+          <div className="text-3xl font-bold mb-2">{weeklyStats.score}/100</div>
+          <div className="w-full h-2 bg-base-200 rounded-full overflow-hidden mb-3">
+            <div className="h-2 bg-primary rounded-full" style={{ width: `${weeklyStats.score}%` }} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2 rounded bg-base-200/60">
+              <div className="opacity-60">{language === 'de' ? 'Aktive Tage' : 'Active Days'}</div>
+              <div className="font-semibold">{weeklyStats.activeDays}/7</div>
+            </div>
+            <div className="p-2 rounded bg-base-200/60">
+              <div className="opacity-60">{language === 'de' ? 'Wochen-Netto' : 'Weekly Net'}</div>
+              <div className={`font-semibold ${weeklyStats.weekNet >= 0 ? 'text-success' : 'text-error'}`}>
+                {fmt(weeklyStats.weekNet, cur)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
+          <div className="text-sm font-semibold mb-3">
+            {language === 'de' ? 'Ziel-Autopilot Simulator' : 'Goal Autopilot Simulator'}
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs opacity-60">
+                {language === 'de' ? 'Sparziel' : 'Savings Goal'}
+              </label>
+              <select
+                className="select select-bordered select-sm w-full mt-1"
+                value={selectedGoalId}
+                onChange={(e) => setSelectedGoalId(e.target.value)}
+              >
+                {activeGoals.map((g: any) => (
+                  <option key={g.id} value={g.id}>{g.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs opacity-60">
+                {language === 'de' ? 'Automatisch sparen (%)' : 'Auto-save (%)'}
+              </label>
+              <input
+                type="range"
+                min={5}
+                max={40}
+                step={1}
+                value={autopilotPercent}
+                onChange={(e) => setAutopilotPercent(parseInt(e.target.value, 10))}
+                className="range range-primary mt-1"
+              />
+              <div className="text-xs mt-1 opacity-70">{autopilotPercent}%</div>
+            </div>
+            {autopilot.selectedGoal ? (
+              <div className="text-xs grid grid-cols-2 gap-2">
+                <div className="p-2 rounded bg-base-200/60">
+                  <div className="opacity-60">{language === 'de' ? 'Monatlicher Beitrag' : 'Monthly Contribution'}</div>
+                  <div className="font-semibold">{fmt(autopilot.monthlyContribution, cur)}</div>
+                </div>
+                <div className="p-2 rounded bg-base-200/60">
+                  <div className="opacity-60">{language === 'de' ? 'Bis Ziel' : 'To Goal'}</div>
+                  <div className="font-semibold">
+                    {autopilot.monthsToGoal ? `${autopilot.monthsToGoal} ${language === 'de' ? 'Monate' : 'months'}` : '-'}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs opacity-60">
+                {language === 'de' ? 'Kein aktives Sparziel vorhanden.' : 'No active savings goal found.'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
+        <div className="text-sm font-semibold mb-3">
+          {language === 'de' ? 'Proaktive AI-Aktionen' : 'Proactive AI Actions'}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <button
+            className="btn btn-outline btn-sm justify-start"
+            onClick={() =>
+              runQuickPrompt(language === 'de' ? 'Finde 3 konkrete Einsparungen fuer diese Woche basierend auf meinen Ausgaben.' : 'Find 3 concrete savings opportunities for this week based on my spending.')
+            }
+          >
+            {language === 'de' ? '3 Einsparungen finden' : 'Find 3 savings'}
+          </button>
+          <button
+            className="btn btn-outline btn-sm justify-start"
+            onClick={() =>
+              runQuickPrompt(language === 'de' ? 'Erstelle mir einen Wochenplan mit taeglichen Finanzaktionen.' : 'Create a weekly plan with daily financial actions.')}
+          >
+            {language === 'de' ? 'Wochenplan erstellen' : 'Build weekly plan'}
+          </button>
+          <button
+            className="btn btn-outline btn-sm justify-start"
+            onClick={() =>
+              runQuickPrompt(language === 'de' ? `Berechne eine sinnvolle automatische Sparquote fuer mein Ziel ${autopilot.selectedGoal?.name || ''}.` : `Suggest an optimal auto-save rate for my goal ${autopilot.selectedGoal?.name || ''}.`)
+            }
+          >
+            {language === 'de' ? 'Autopilot optimieren' : 'Optimize autopilot'}
+          </button>
         </div>
       </div>
 
