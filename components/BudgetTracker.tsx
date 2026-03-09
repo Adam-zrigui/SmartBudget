@@ -854,7 +854,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     fmt, taxResult, tax, setTax, notify, openEdit, save, del, exportCSV,
     showForm, setShowForm, IC, toast,
     DE_TAX_CLASSES, DE_STATES, CATEGORIES, MONTHS_DE,
-    txsLength: txs.length, txs, savingsGoals, TAG, cur, dark: isDark,
+    txsLength: txs.length, savingsGoals, TAG, cur, dark: isDark,
   } as const;
 
   return (
