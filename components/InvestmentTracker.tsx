@@ -10,8 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
-import { TrendingUp, TrendingDown, Plus, PieChart, BarChart3, Trash2, Edit } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, Edit, Trash2, DollarSign, PieChart, BarChart3 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Investment {
@@ -23,38 +22,39 @@ interface Investment {
   purchasePrice: number;
   currentPrice?: number;
   currency: string;
-  portfolio?: string;
   purchaseDate: Date;
-  lastUpdated?: Date;
-  totalValue?: number;
-  totalCost?: number;
-  unrealizedGain?: number;
+  portfolio?: string;
   riskLevel?: string;
   expectedReturn?: number;
   broker?: string;
   notes?: string;
+  totalValue?: number;
+  totalCost?: number;
+  unrealizedGain?: number;
 }
 
 interface InvestmentTrackerProps {
-  investments?: any[];
-  addInvestment?: (investment: any) => void | Promise<unknown>;
-  updateInvestment?: (investment: any) => void | Promise<unknown>;
-  deleteInvestment?: (id: string) => void | Promise<unknown>;
-  updatePrices?: (investments: any[]) => void | Promise<unknown>;
-  onCreateInvestment?: (investment: any) => void | Promise<unknown>;
-  onUpdateInvestment?: (investment: any) => void | Promise<unknown>;
-  onDeleteInvestment?: (id: string) => void | Promise<unknown>;
-  onUpdatePrices?: (investments: any[]) => void | Promise<unknown>;
+  investments?: Investment[];
+  addInvestment?: (investment: any) => void;
+  updateInvestment?: (investment: any) => void;
+  deleteInvestment?: (id: string) => void;
+  updatePrices?: (investments: Investment[]) => void;
 }
 
 const INVESTMENT_TYPES = [
   { value: 'stocks', label: { de: 'Aktien', en: 'Stocks' } },
-  { value: 'crypto', label: { de: 'Kryptowaehrungen', en: 'Cryptocurrency' } },
+  { value: 'crypto', label: { de: 'Kryptowährungen', en: 'Cryptocurrency' } },
   { value: 'bonds', label: { de: 'Anleihen', en: 'Bonds' } },
   { value: 'real_estate', label: { de: 'Immobilien', en: 'Real Estate' } },
   { value: 'mutual_fund', label: { de: 'Investmentfonds', en: 'Mutual Funds' } },
   { value: 'etf', label: { de: 'ETFs', en: 'ETFs' } },
-  { value: 'other', label: { de: 'Sonstiges', en: 'Other' } }
+  { value: 'other', label: { de: 'Sonstige', en: 'Other' } }
+];
+
+const RISK_LEVELS = [
+  { value: 'low', label: { de: 'Niedrig', en: 'Low' }, color: 'default' },
+  { value: 'medium', label: { de: 'Mittel', en: 'Medium' }, color: 'secondary' },
+  { value: 'high', label: { de: 'Hoch', en: 'High' }, color: 'destructive' }
 ];
 
 const PORTFOLIOS = [
@@ -65,34 +65,20 @@ const PORTFOLIOS = [
   { value: 'growth', label: { de: 'Wachstum', en: 'Growth' } }
 ];
 
-const RISK_LEVELS = [
-  { value: 'low', label: { de: 'Niedrig', en: 'Low' }, color: 'default' },
-  { value: 'medium', label: { de: 'Mittel', en: 'Medium' }, color: 'secondary' },
-  { value: 'high', label: { de: 'Hoch', en: 'High' }, color: 'destructive' }
-];
-
 export default function InvestmentTracker({
-  investments = [],
-  addInvestment,
-  updateInvestment,
-  deleteInvestment,
-  updatePrices,
-  onCreateInvestment,
-  onUpdateInvestment,
-  onDeleteInvestment,
-  onUpdatePrices
+  investments: propInvestments,
+  addInvestment: propAddInvestment,
+  updateInvestment: propUpdateInvestment,
+  deleteInvestment: propDeleteInvestment,
+  updatePrices: propUpdatePrices
 }: InvestmentTrackerProps) {
   const { language } = useLanguageStore();
   const t = translations[language];
   const { toast } = useToast();
 
-  const createInvestmentHandler = addInvestment ?? onCreateInvestment;
-  const updateInvestmentHandler = updateInvestment ?? onUpdateInvestment;
-  const deleteInvestmentHandler = deleteInvestment ?? onDeleteInvestment;
-  const updatePricesHandler = updatePrices ?? onUpdatePrices;
-
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [editingInvestmentId, setEditingInvestmentId] = useState<string | null>(null);
+  const investmentsList = Array.isArray(propInvestments) ? propInvestments : [];
+
   const [newInvestment, setNewInvestment] = useState({
     name: '',
     type: 'stocks',
@@ -101,167 +87,91 @@ export default function InvestmentTracker({
     purchasePrice: 0,
     currentPrice: 0,
     currency: 'EUR',
-    portfolio: '',
     purchaseDate: new Date().toISOString().split('T')[0],
+    portfolio: '',
     riskLevel: 'medium',
     expectedReturn: 0,
     broker: '',
     notes: ''
   });
 
-  const handleCreateInvestment = async () => {
-    if (!newInvestment.name || newInvestment.quantity <= 0 || newInvestment.purchasePrice <= 0) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Bitte alle erforderlichen Felder ausfuellen' : 'Please fill all required fields',
-        variant: 'destructive'
-      });
-      return;
-    }
+  // Calculate investment metrics
+  const processedInvestments = investmentsList.map(investment => {
+    const currentPrice = investment.currentPrice || investment.purchasePrice;
+    const totalValue = investment.quantity * currentPrice;
+    const totalCost = investment.quantity * investment.purchasePrice;
+    const unrealizedGain = totalValue - totalCost;
+    const gainPercentage = totalCost > 0 ? (unrealizedGain / totalCost) * 100 : 0;
 
-    const investmentData = {
-      ...newInvestment,
-      purchaseDate: new Date(newInvestment.purchaseDate)
+    return {
+      ...investment,
+      currentPrice,
+      totalValue,
+      totalCost,
+      unrealizedGain,
+      gainPercentage
     };
+  });
 
-    if (editingInvestmentId && !updateInvestmentHandler) {
+  // Portfolio summary
+  const portfolioSummary = processedInvestments.reduce(
+    (acc, inv) => ({
+      totalValue: acc.totalValue + (inv.totalValue || 0),
+      totalCost: acc.totalCost + (inv.totalCost || 0),
+      totalGain: acc.totalGain + (inv.unrealizedGain || 0),
+    }),
+    { totalValue: 0, totalCost: 0, totalGain: 0 }
+  );
+
+  const handleCreateInvestment = () => {
+    if (!newInvestment.name || !newInvestment.type || newInvestment.quantity <= 0 || newInvestment.purchasePrice <= 0) {
       toast({
         title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Update-Aktion ist nicht verfuegbar' : 'Update action is not available',
+        description: language === 'de' ? 'Bitte alle erforderlichen Felder ausfüllen' : 'Please fill all required fields',
         variant: 'destructive'
       });
       return;
     }
 
-    if (!editingInvestmentId && !createInvestmentHandler) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Investment-Aktion ist nicht verfuegbar' : 'Investment action is not available',
-        variant: 'destructive'
-      });
-      return;
+    if (propAddInvestment) {
+      propAddInvestment(newInvestment);
     }
 
-    try {
-      if (editingInvestmentId) {
-        await Promise.resolve(updateInvestmentHandler?.({ ...investmentData, id: editingInvestmentId }));
-      } else {
-        await Promise.resolve(createInvestmentHandler?.(investmentData));
-      }
-      setNewInvestment({
-        name: '',
-        type: 'stocks',
-        symbol: '',
-        quantity: 0,
-        purchasePrice: 0,
-        currentPrice: 0,
-        currency: 'EUR',
-        portfolio: '',
-        purchaseDate: new Date().toISOString().split('T')[0],
-        riskLevel: 'medium',
-        expectedReturn: 0,
-        broker: '',
-        notes: ''
-      });
-      setIsCreateDialogOpen(false);
-      setEditingInvestmentId(null);
-
-      toast({
-        title: editingInvestmentId
-          ? (language === 'de' ? 'Investment aktualisiert' : 'Investment updated')
-          : (language === 'de' ? 'Investment hinzugefuegt' : 'Investment added'),
-        description: editingInvestmentId
-          ? (language === 'de' ? 'Investment wurde erfolgreich aktualisiert' : 'Investment updated successfully')
-          : (language === 'de' ? 'Neues Investment wurde erfolgreich hinzugefuegt' : 'New investment added successfully')
-      });
-    } catch (err) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de'
-          ? 'Investment konnte nicht gespeichert werden.'
-          : 'Investment could not be saved.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const openEditInvestment = (investment: any) => {
     setNewInvestment({
-      name: investment.name || '',
-      type: investment.type || 'stocks',
-      symbol: investment.symbol || '',
-      quantity: Number(investment.quantity) || 0,
-      purchasePrice: Number(investment.purchasePrice) || 0,
-      currentPrice: Number(investment.currentPrice) || 0,
-      currency: investment.currency || 'EUR',
-      portfolio: investment.portfolio || '',
-      purchaseDate: investment.purchaseDate
-        ? new Date(investment.purchaseDate).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0],
-      riskLevel: investment.riskLevel || 'medium',
-      expectedReturn: Number(investment.expectedReturn) || 0,
-      broker: investment.broker || '',
-      notes: investment.notes || '',
+      name: '',
+      type: 'stocks',
+      symbol: '',
+      quantity: 0,
+      purchasePrice: 0,
+      currentPrice: 0,
+      currency: 'EUR',
+      purchaseDate: new Date().toISOString().split('T')[0],
+      portfolio: '',
+      riskLevel: 'medium',
+      expectedReturn: 0,
+      broker: '',
+      notes: ''
     });
-    setEditingInvestmentId(investment.id);
-    setIsCreateDialogOpen(true);
+    setIsCreateDialogOpen(false);
+
+    toast({
+      title: language === 'de' ? 'Investment erstellt' : 'Investment created',
+      description: language === 'de' ? 'Neues Investment wurde erfolgreich erstellt' : 'New investment created successfully'
+    });
   };
 
-  const handleDeleteInvestment = async (id: string, name: string) => {
-    if (!deleteInvestmentHandler) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de' ? 'Loesch-Aktion ist nicht verfuegbar' : 'Delete action is not available',
-        variant: 'destructive',
-      });
-      return;
-    }
-    const confirmed = window.confirm(
-      language === 'de'
-        ? `Moechtest du "${name}" wirklich loeschen?`
-        : `Do you really want to delete "${name}"?`
-    );
-    if (!confirmed) return;
-    try {
-      await Promise.resolve(deleteInvestmentHandler(id));
-      toast({
-        title: language === 'de' ? 'Investment geloescht' : 'Investment deleted',
-        description: language === 'de' ? 'Das Investment wurde entfernt.' : 'The investment has been removed.',
-      });
-    } catch (err) {
-      toast({
-        title: language === 'de' ? 'Fehler' : 'Error',
-        description: language === 'de'
-          ? 'Investment konnte nicht geloescht werden.'
-          : 'Investment could not be deleted.',
-        variant: 'destructive',
-      });
-    }
+  const getInvestmentTypeLabel = (type: string) => {
+    const typeObj = INVESTMENT_TYPES.find(t => t.value === type);
+    return typeObj ? typeObj.label[language as keyof typeof typeObj.label] : type;
   };
 
-  const getTypeLabel = (type: string) => {
-    const investmentType = INVESTMENT_TYPES.find(t => t.value === type);
-    return investmentType ? investmentType.label[language as keyof typeof investmentType.label] : type;
+  const getRiskLevelInfo = (riskLevel: string) => {
+    return RISK_LEVELS.find(r => r.value === riskLevel) || RISK_LEVELS[1];
   };
 
   const getPortfolioLabel = (portfolio: string) => {
     const port = PORTFOLIOS.find(p => p.value === portfolio);
     return port ? port.label[language as keyof typeof port.label] : portfolio;
-  };
-
-  const getRiskInfo = (riskLevel: string) => {
-    return RISK_LEVELS.find(r => r.value === riskLevel) || RISK_LEVELS[1];
-  };
-
-  const calculateGain = (investment: Investment) => {
-    if (!investment.currentPrice) return { gain: 0, percentage: 0 };
-
-    const currentValue = investment.quantity * investment.currentPrice;
-    const costBasis = investment.quantity * investment.purchasePrice;
-    const gain = currentValue - costBasis;
-    const percentage = costBasis > 0 ? (gain / costBasis) * 100 : 0;
-
-    return { gain, percentage, currentValue, costBasis };
   };
 
   const formatCurrency = (amount: number, currency: string = 'EUR') => {
@@ -271,80 +181,48 @@ export default function InvestmentTracker({
     }).format(amount);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(language === 'de' ? 'de-DE' : 'en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }).format(date);
+  const formatPercentage = (percentage: number) => {
+    return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
   };
-
-  // Calculate portfolio totals
-  const portfolioTotals = investments.reduce((acc, investment) => {
-    const { currentValue = 0, costBasis = 0, gain = 0 } = calculateGain(investment);
-
-    acc.totalValue += currentValue;
-    acc.totalCost += costBasis;
-    acc.totalGain += gain;
-
-    return acc;
-  }, { totalValue: 0, totalCost: 0, totalGain: 0 });
-
-  const totalReturn = portfolioTotals.totalCost > 0
-    ? (portfolioTotals.totalGain / portfolioTotals.totalCost) * 100
-    : 0;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
-            {language === 'de' ? 'Investment-Tracking' : 'Investment Tracking'}
+            {language === 'de' ? 'Investitionen' : 'Investments'}
           </h2>
           <p className="text-muted-foreground">
             {language === 'de'
-              ? 'Verfolge deine Investments und analysiere die Performance'
-              : 'Track your investments and analyze performance'
+              ? 'Verwalte deine Investment-Portfolio und verfolge die Performance'
+              : 'Manage your investment portfolio and track performance'
             }
           </p>
         </div>
 
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!updatePricesHandler) {
-                toast({
-                  title: language === 'de' ? 'Fehler' : 'Error',
-                  description: language === 'de' ? 'Preisaktualisierung ist nicht verfuegbar' : 'Price update is not available',
-                  variant: 'destructive'
-                });
-                return;
-              }
-              updatePricesHandler(investments);
-            }}
-            className="gap-2"
-          >
-            <BarChart3 className="h-4 w-4" />
-            {language === 'de' ? 'Preise aktualisieren' : 'Update Prices'}
-          </Button>
+          {propUpdatePrices && (
+            <Button
+              variant="outline"
+              onClick={() => propUpdatePrices(processedInvestments)}
+              className="gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {language === 'de' ? 'Preise aktualisieren' : 'Update Prices'}
+            </Button>
+          )}
 
-          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
-            setIsCreateDialogOpen(open);
-            if (!open) setEditingInvestmentId(null);
-          }}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
                 {language === 'de' ? 'Investment hinzufügen' : 'Add Investment'}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingInvestmentId
-                    ? (language === 'de' ? 'Investment bearbeiten' : 'Edit Investment')
-                    : (language === 'de' ? 'Neues Investment' : 'New Investment')}
+                  {language === 'de' ? 'Neues Investment' : 'New Investment'}
                 </DialogTitle>
                 <DialogDescription>
                   {language === 'de'
@@ -354,7 +232,7 @@ export default function InvestmentTracker({
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="investment-name">
@@ -387,10 +265,10 @@ export default function InvestmentTracker({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="symbol">
-                      {language === 'de' ? 'Symbol/Ticker' : 'Symbol/Ticker'}
+                      {language === 'de' ? 'Symbol' : 'Symbol'}
                     </Label>
                     <Input
                       id="symbol"
@@ -400,26 +278,6 @@ export default function InvestmentTracker({
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="portfolio">
-                      {language === 'de' ? 'Portfolio' : 'Portfolio'}
-                    </Label>
-                    <Select value={newInvestment.portfolio} onValueChange={(value) => setNewInvestment(prev => ({ ...prev, portfolio: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={language === 'de' ? 'Portfolio wählen' : 'Select portfolio'} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PORTFOLIOS.map(portfolio => (
-                          <SelectItem key={portfolio.value} value={portfolio.value}>
-                            {portfolio.label[language as keyof typeof portfolio.label]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="quantity">
                       {language === 'de' ? 'Anzahl' : 'Quantity'}
@@ -435,6 +293,25 @@ export default function InvestmentTracker({
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="currency">
+                      {language === 'de' ? 'Währung' : 'Currency'}
+                    </Label>
+                    <Select value={newInvestment.currency} onValueChange={(value) => setNewInvestment(prev => ({ ...prev, currency: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                        <SelectItem value="GBP">GBP</SelectItem>
+                        <SelectItem value="CHF">CHF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="purchase-price">
                       {language === 'de' ? 'Kaufpreis' : 'Purchase Price'}
@@ -452,7 +329,7 @@ export default function InvestmentTracker({
 
                   <div>
                     <Label htmlFor="current-price">
-                      {language === 'de' ? 'Aktueller Preis' : 'Current Price'}
+                      {language === 'de' ? 'Aktueller Preis (optional)' : 'Current Price (optional)'}
                     </Label>
                     <Input
                       id="current-price"
@@ -466,22 +343,40 @@ export default function InvestmentTracker({
                   </div>
                 </div>
 
+                <div>
+                  <Label htmlFor="purchase-date">
+                    {language === 'de' ? 'Kaufdatum' : 'Purchase Date'}
+                  </Label>
+                  <Input
+                    id="purchase-date"
+                    type="date"
+                    value={newInvestment.purchaseDate}
+                    onChange={(e) => setNewInvestment(prev => ({ ...prev, purchaseDate: e.target.value }))}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="purchase-date">
-                      {language === 'de' ? 'Kaufdatum' : 'Purchase Date'}
+                    <Label htmlFor="portfolio">
+                      {language === 'de' ? 'Portfolio' : 'Portfolio'}
                     </Label>
-                    <Input
-                      id="purchase-date"
-                      type="date"
-                      value={newInvestment.purchaseDate}
-                      onChange={(e) => setNewInvestment(prev => ({ ...prev, purchaseDate: e.target.value }))}
-                    />
+                    <Select value={newInvestment.portfolio} onValueChange={(value) => setNewInvestment(prev => ({ ...prev, portfolio: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'de' ? 'Portfolio wählen' : 'Select portfolio'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PORTFOLIOS.map(portfolio => (
+                          <SelectItem key={portfolio.value} value={portfolio.value}>
+                            {portfolio.label[language as keyof typeof portfolio.label]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
                     <Label htmlFor="risk-level">
-                      {language === 'de' ? 'Risiko' : 'Risk Level'}
+                      {language === 'de' ? 'Risikolevel' : 'Risk Level'}
                     </Label>
                     <Select value={newInvestment.riskLevel} onValueChange={(value) => setNewInvestment(prev => ({ ...prev, riskLevel: value }))}>
                       <SelectTrigger>
@@ -535,15 +430,13 @@ export default function InvestmentTracker({
                     id="notes"
                     value={newInvestment.notes}
                     onChange={(e) => setNewInvestment(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder={language === 'de' ? 'Zusaetzliche Informationen' : 'Additional information'}
+                    placeholder={language === 'de' ? 'Zusätzliche Informationen' : 'Additional information'}
                   />
                 </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button onClick={handleCreateInvestment} className="flex-1">
-                    {editingInvestmentId
-                      ? (language === 'de' ? 'Speichern' : 'Save')
-                      : (language === 'de' ? 'Hinzufügen' : 'Add')}
+                    {language === 'de' ? 'Hinzufügen' : 'Add'}
                   </Button>
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     {language === 'de' ? 'Abbrechen' : 'Cancel'}
@@ -555,62 +448,53 @@ export default function InvestmentTracker({
         </div>
       </div>
 
-      {/* Portfolio Overview */}
-      {investments.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                {language === 'de' ? 'Portfolio Wert' : 'Portfolio Value'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatCurrency(portfolioTotals.totalValue)}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Portfolio Summary */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'de' ? 'Gesamtwert' : 'Total Value'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(portfolioSummary.totalValue)}
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                {language === 'de' ? 'Gesamtgewinn/Verlust' : 'Total Gain/Loss'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${portfolioTotals.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(portfolioTotals.totalGain)}
-              </div>
-              <div className={`text-sm ${portfolioTotals.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'de' ? 'Gesamtkosten' : 'Total Cost'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(portfolioSummary.totalCost)}
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                {language === 'de' ? 'Investitionen' : 'Investments'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {investments.length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {language === 'de' ? 'verschiedene Assets' : 'different assets'}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {language === 'de' ? 'Unrealisierter Gewinn' : 'Unrealized Gain'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${portfolioSummary.totalGain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(portfolioSummary.totalGain)}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Investments Grid */}
+      {/* Investments List */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {investments.map((investment) => {
-          const { gain, percentage, currentValue, costBasis } = calculateGain(investment);
-          const riskInfo = getRiskInfo(investment.riskLevel || 'medium');
-          const isPositive = gain >= 0;
+        {processedInvestments.map((investment) => {
+          const riskInfo = getRiskLevelInfo(investment.riskLevel || 'medium');
+          const isPositive = (investment.unrealizedGain || 0) >= 0;
 
           return (
             <Card key={investment.id} className="hover:shadow-md transition-shadow">
@@ -620,112 +504,68 @@ export default function InvestmentTracker({
                     <CardTitle className="text-lg truncate">{investment.name}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
                       <Badge variant="outline">
-                        {getTypeLabel(investment.type)}
+                        {getInvestmentTypeLabel(investment.type)}
                       </Badge>
                       {investment.symbol && (
-                        <Badge variant="secondary">
-                          {investment.symbol}
-                        </Badge>
+                        <span className="text-sm font-mono">{investment.symbol}</span>
                       )}
                     </CardDescription>
                   </div>
 
-                  <div className="ml-2 flex items-center gap-1">
+                  <div className="flex items-center gap-2 ml-2">
                     <Badge variant={riskInfo.color as any}>
                       {riskInfo.label[language as keyof typeof riskInfo.label]}
                     </Badge>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-primary"
-                      onClick={() => openEditInvestment(investment)}
-                      aria-label={language === 'de' ? 'Investment bearbeiten' : 'Edit investment'}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteInvestment(investment.id, investment.name)}
-                      aria-label={language === 'de' ? 'Investment loeschen' : 'Delete investment'}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-muted-foreground">
-                      {language === 'de' ? 'Aktueller Wert' : 'Current Value'}
-                    </div>
-                    <div className="text-lg font-semibold">
-                      {formatCurrency(currentValue || (investment.quantity * investment.purchasePrice), investment.currency)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-muted-foreground">
-                      {language === 'de' ? 'Gewinn/Verlust' : 'Gain/Loss'}
-                    </div>
-                    <div className={`text-lg font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                      {isPositive ? '+' : ''}{formatCurrency(gain, investment.currency)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>{language === 'de' ? 'Performance' : 'Performance'}</span>
-                    <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
-                      {isPositive ? '+' : ''}{percentage.toFixed(2)}%
-                    </span>
-                  </div>
-                  <Progress
-                    value={Math.min(Math.abs(percentage), 100)}
-                    className={`h-2 ${isPositive ? 'bg-green-100' : 'bg-red-100'}`}
-                  />
-                </div>
-
+              <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-muted-foreground">
+                    <p className="text-muted-foreground">
                       {language === 'de' ? 'Anzahl' : 'Quantity'}
-                    </div>
-                    <div className="font-medium">
-                      {investment.quantity.toLocaleString()}
-                    </div>
+                    </p>
+                    <p className="font-medium">{investment.quantity}</p>
                   </div>
-
                   <div>
-                    <div className="text-muted-foreground">
-                      {language === 'de' ? 'Ø Preis' : 'Avg Price'}
-                    </div>
-                    <div className="font-medium">
-                      {formatCurrency(investment.purchasePrice, investment.currency)}
-                    </div>
+                    <p className="text-muted-foreground">
+                      {language === 'de' ? 'Aktueller Wert' : 'Current Value'}
+                    </p>
+                    <p className="font-medium">
+                      {formatCurrency(investment.totalValue || 0, investment.currency)}
+                    </p>
                   </div>
                 </div>
 
-                {investment.portfolio && (
+                <div className="flex items-center justify-between">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">
-                      {language === 'de' ? 'Portfolio:' : 'Portfolio:'}
-                    </span>
-                    <Badge variant="outline" className="ml-2">
+                    <p className="text-muted-foreground">
+                      {language === 'de' ? 'Gewinn/Verlust' : 'Gain/Loss'}
+                    </p>
+                    <div className={`flex items-center gap-1 font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {isPositive ? (
+                        <TrendingUp className="h-3 w-3" />
+                      ) : (
+                        <TrendingDown className="h-3 w-3" />
+                      )}
+                      {formatCurrency(investment.unrealizedGain || 0, investment.currency)}
+                      <span className="text-xs">
+                        ({formatPercentage(investment.gainPercentage || 0)})
+                      </span>
+                    </div>
+                  </div>
+
+                  {investment.portfolio && (
+                    <Badge variant="secondary" className="text-xs">
                       {getPortfolioLabel(investment.portfolio)}
                     </Badge>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {investment.lastUpdated && (
+                {investment.expectedReturn && investment.expectedReturn > 0 && (
                   <div className="text-xs text-muted-foreground">
-                    {language === 'de' ? 'Zuletzt aktualisiert' : 'Last updated'}: {formatDate(investment.lastUpdated)}
+                    {language === 'de' ? 'Erwartete Rendite' : 'Expected Return'}: {investment.expectedReturn}%
                   </div>
                 )}
               </CardContent>
@@ -734,21 +574,21 @@ export default function InvestmentTracker({
         })}
       </div>
 
-      {investments.length === 0 && (
+      {processedInvestments.length === 0 && (
         <Card className="p-8 text-center">
           <PieChart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">
-            {language === 'de' ? 'Keine Investments vorhanden' : 'No investments yet'}
+          <h3 className="text-lg font-medium mb-2">
+            {language === 'de' ? 'Keine Investments' : 'No Investments'}
           </h3>
           <p className="text-muted-foreground mb-4">
             {language === 'de'
-              ? 'Fuege dein erstes Investment hinzu, um dein Portfolio zu verfolgen'
+              ? 'Füge dein erstes Investment hinzu, um mit der Verfolgung zu beginnen'
               : 'Add your first investment to start tracking your portfolio'
             }
           </p>
           <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            {language === 'de' ? 'Investment hinzufügen' : 'Add Investment'}
+            {language === 'de' ? 'Erstes Investment hinzufügen' : 'Add First Investment'}
           </Button>
         </Card>
       )}
