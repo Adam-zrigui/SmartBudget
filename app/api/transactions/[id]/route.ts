@@ -63,16 +63,13 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify ownership; if already deleted, treat as idempotent success.
-    const existing = await prisma.transaction.findUnique({ where: { id } });
-    if (!existing) {
+    // Atomic, idempotent delete scoped to owner.
+    const result = await prisma.transaction.deleteMany({
+      where: { id, userId },
+    });
+    if (result.count === 0) {
       return NextResponse.json({ success: true, alreadyDeleted: true });
     }
-    if (existing.userId !== userId) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    await prisma.transaction.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -73,6 +73,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [fMonth, setFMonth] = useState("all");
   const [fType, setFType] = useState("all");
   const [q, setQ] = useState("");
@@ -343,7 +344,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Erstellen", "err");
         return;
       }
@@ -363,7 +364,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tx),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren", "err");
         return;
       }
@@ -377,11 +378,12 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   }
 
   async function deleteTx(id: string) {
+    setDeletingId(id);
     try {
       const res = await authedFetch(`/api/transactions/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Löschen", "err");
         return;
       }
@@ -390,6 +392,8 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     } catch (err) {
       console.error("deleteTx error", err);
       notify("Netzwerkfehler", "err");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -403,7 +407,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Erstellen der wiederkehrenden Buchung", "err");
         return;
       }
@@ -423,7 +427,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(recurring),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren der wiederkehrenden Buchung", "err");
         return;
       }
@@ -441,7 +445,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       const res = await authedFetch(`/api/recurring-transactions/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Löschen der wiederkehrenden Buchung", "err");
         return;
       }
@@ -460,7 +464,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: active }),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Ändern des Status", "err");
         return;
       }
@@ -483,7 +487,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Erstellen des Budgets", "err");
         return;
       }
@@ -503,7 +507,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(budget),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren des Budgets", "err");
         return;
       }
@@ -521,7 +525,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       const res = await authedFetch(`/api/budgets/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Löschen des Budgets", "err");
         return;
       }
@@ -543,7 +547,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Erstellen des Sparziels", "err");
         return;
       }
@@ -563,7 +567,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(goal),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren des Sparziels", "err");
         return;
       }
@@ -581,7 +585,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       const res = await authedFetch(`/api/savings-goals/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Löschen des Sparziels", "err");
         return;
       }
@@ -600,7 +604,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(contribution),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Hinzufügen der Einzahlung", "err");
         return;
       }
@@ -628,7 +632,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Erstellen der Investition", "err");
         return;
       }
@@ -648,7 +652,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(investment),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren der Investition", "err");
         return;
       }
@@ -666,7 +670,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       const res = await authedFetch(`/api/investments/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Löschen der Investition", "err");
         return;
       }
@@ -685,7 +689,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ investments }),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren der Preise", "err");
         return;
       }
@@ -707,7 +711,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
       const res = await authedFetch("/api/currencies/update-rates", {
         method: "POST",
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Aktualisieren der Wechselkurse", "err");
         return;
       }
@@ -729,7 +733,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ baseCurrency: currencyCode }),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Ändern der Basiswährung", "err");
         return;
       }
@@ -750,7 +754,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(currency),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Hinzufügen der Währung", "err");
         return;
       }
@@ -772,7 +776,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
-      if (!res.ok) {
+      if (!res.ok && res.status !== 404) {
         notify("Fehler beim Entfernen der Währung", "err");
         return;
       }
@@ -809,11 +813,12 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
   }
 
   async function del(id: string) {
+    if (deletingId) return;
     const res = await deleteTx(id);
     setDelId(null);
-    if (res) notify("Buchung gelöscht", "err");
-  }
+    if (res) notify("Buchung gelöscht", "ok");
 
+  }
   const cur = "EUR";
   const language = useLanguageStore((s) => s.language);
   const tr = translations[language];
@@ -852,7 +857,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
     filtered, inc, exp, bal, svRate, byCat, monthly,
     txs,
     fmt, taxResult, tax, setTax, notify, openEdit, save, del, exportCSV,
-    showForm, setShowForm, IC, toast,
+    showForm, setShowForm, IC, toast, deletingId,
     DE_TAX_CLASSES, DE_STATES, CATEGORIES, MONTHS_DE,
     txsLength: txs.length, savingsGoals, TAG, cur, dark: isDark,
   } as const;
@@ -955,7 +960,7 @@ export default function BudgetTracker({ initialTab = "dashboard" }: { initialTab
           IC={IC as { x: string; ok: string }}
         />
       )}
-      {delId && <DeleteModal delId={delId} setDelId={setDelId} del={del} />}
+      {delId && <DeleteModal delId={delId} setDelId={setDelId} del={del} isDeleting={Boolean(deletingId)} language={language} />}
       {toast && <Toast toast={toast} />}
     </div>
   );
