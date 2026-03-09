@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
+import { ensureUserRecord } from "@/lib/ensure-user";
 
 function getCurrencyName(code: string): string {
   const names: { [key: string]: string } = {
@@ -22,6 +23,7 @@ function getCurrencyName(code: string): string {
 async function setBaseCurrency(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(request);
+    await ensureUserRecord(userId);
 
     const body = await request.json();
     const currencyCode = body?.currencyCode || body?.baseCurrency;

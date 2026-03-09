@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
+import { ensureUserRecord } from "@/lib/ensure-user";
 
 function getCurrencyName(code: string): string {
   const names: { [key: string]: string } = {
@@ -22,6 +23,7 @@ function getCurrencyName(code: string): string {
 export async function GET(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(request);
+    await ensureUserRecord(userId);
     const settings = await prisma.userSettings.findUnique({ where: { userId } });
     const baseCurrency = settings?.baseCurrency || "EUR";
 
@@ -64,6 +66,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(request);
+    await ensureUserRecord(userId);
     const settings = await prisma.userSettings.findUnique({ where: { userId } });
     const baseCurrency = settings?.baseCurrency || "EUR";
 
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(request);
+    await ensureUserRecord(userId);
     const settings = await prisma.userSettings.findUnique({ where: { userId } });
     const baseCurrency = settings?.baseCurrency || "EUR";
     const body = await request.json();

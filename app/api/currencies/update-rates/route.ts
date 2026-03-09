@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
+import { ensureUserRecord } from "@/lib/ensure-user";
 
 // Mock function to get exchange rates - in a real app, you'd integrate with a currency API
 async function getExchangeRates(baseCurrency: string = 'EUR'): Promise<{ [key: string]: number }> {
@@ -39,6 +40,7 @@ async function getExchangeRates(baseCurrency: string = 'EUR'): Promise<{ [key: s
 export async function POST(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId(request);
+    await ensureUserRecord(userId);
 
     // Get user's base currency
     const userSettings = await prisma.userSettings.findUnique({

@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUserId } from "@/lib/auth-helper";
+import { ensureUserRecord } from "@/lib/ensure-user";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
+    await ensureUserRecord(userId);
 
     const { searchParams } = new URL(req.url);
     const month = searchParams.get("month");
@@ -68,6 +70,7 @@ export async function POST(req: NextRequest) {
   try {
     // Get Firebase user ID from token
     const userId = await getAuthenticatedUserId(req);
+    await ensureUserRecord(userId);
 
     const body = await req.json();
     
@@ -112,3 +115,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
