@@ -4,7 +4,7 @@ import { useLanguageStore } from "@/lib/store";
 import { translations } from "@/lib/translations";
 import { useTheme } from "next-themes";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,10 +34,10 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
   const t = translations[language];
   const { user, loading } = useAuth();
   const { toast } = useToast();
-  const monthLabel = new Intl.DateTimeFormat(language === 'de' ? 'de-DE' : 'en-US', {
-    month: 'short',
-    year: 'numeric',
-  }).format(new Date());
+  const monthLabel = useMemo(() => {
+    const locale = mounted ? (language === 'de' ? 'de-DE' : 'en-US') : 'en-US';
+    return new Intl.DateTimeFormat(locale, { month: 'short', year: 'numeric' }).format(new Date());
+  }, [language, mounted]);
 
   const handleExport = async (format: 'csv' | 'json') => {
     try {
@@ -152,7 +152,7 @@ export default function Header({ tab = '', txsLength = 0, exportCSV = () => {}, 
         {/* Desktop Pill badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-base-200 rounded-full text-xs opacity-60 font-medium hover:opacity-80 hover:shadow-md transition-all duration-200">
           <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse" />
-          {txsLength} - {monthLabel}
+          {txsLength} {language === 'de' ? 'Buchungen' : 'Entries'} | {monthLabel}
         </div>
 
         {/* Actions - Better mobile spacing */}

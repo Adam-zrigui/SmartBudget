@@ -1,5 +1,6 @@
 import dynamic from 'next/dynamic';
 const ChartArea = dynamic(() => import('./ChartArea'), { ssr: false, loading: () => <div className="h-48 skeleton-pulse rounded-md" /> });
+
 import { useEffect, useMemo, useState } from 'react';
 import { useLanguageStore } from '@/lib/store';
 import { translations } from '@/lib/translations';
@@ -275,126 +276,15 @@ export default function Dashboard({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left column - Weekly Momentum */}
+      
+
+        {/* Right column - Monthly Overview */}
         <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm font-semibold">
-              {language === 'de' ? 'Woechentliche Dynamik' : 'Weekly Momentum'}
+              {language === 'de' ? 'Monatsverlauf' : 'Monthly Overview'}
             </div>
-            <span className="text-xs opacity-60">
-              {language === 'de' ? 'Streak' : 'Streak'}: {weeklyStats.streakWeeks}w
-            </span>
-          </div>
-          <div className="text-3xl font-bold mb-2">{weeklyStats.score}/100</div>
-          <div className="w-full h-2 bg-base-200 rounded-full overflow-hidden mb-3">
-            <div className="h-2 bg-primary rounded-full" style={{ width: `${weeklyStats.score}%` }} />
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 rounded bg-base-200/60">
-              <div className="opacity-60">{language === 'de' ? 'Aktive Tage' : 'Active Days'}</div>
-              <div className="font-semibold">{weeklyStats.activeDays}/7</div>
-            </div>
-            <div className="p-2 rounded bg-base-200/60">
-              <div className="opacity-60">{language === 'de' ? 'Wochen-Netto' : 'Weekly Net'}</div>
-              <div className={`font-semibold ${weeklyStats.weekNet >= 0 ? 'text-success' : 'text-error'}`}>
-                {fmt(weeklyStats.weekNet, cur)}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
-          <div className="text-sm font-semibold mb-3">
-            {language === 'de' ? 'Ziel-Autopilot Simulator' : 'Goal Autopilot Simulator'}
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs opacity-60">
-                {language === 'de' ? 'Sparziel' : 'Savings Goal'}
-              </label>
-              <select
-                className="select select-bordered select-sm w-full mt-1"
-                value={selectedGoalId}
-                onChange={(e) => setSelectedGoalId(e.target.value)}
-              >
-                {activeGoals.map((g: any) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs opacity-60">
-                {language === 'de' ? 'Automatisch sparen (%)' : 'Auto-save (%)'}
-              </label>
-              <input
-                type="range"
-                min={5}
-                max={40}
-                step={1}
-                value={autopilotPercent}
-                onChange={(e) => setAutopilotPercent(parseInt(e.target.value, 10))}
-                className="range range-primary mt-1"
-              />
-              <div className="text-xs mt-1 opacity-70">{autopilotPercent}%</div>
-            </div>
-            {autopilot.selectedGoal ? (
-              <div className="text-xs grid grid-cols-2 gap-2">
-                <div className="p-2 rounded bg-base-200/60">
-                  <div className="opacity-60">{language === 'de' ? 'Monatlicher Beitrag' : 'Monthly Contribution'}</div>
-                  <div className="font-semibold">{fmt(autopilot.monthlyContribution, cur)}</div>
-                </div>
-                <div className="p-2 rounded bg-base-200/60">
-                  <div className="opacity-60">{language === 'de' ? 'Bis Ziel' : 'To Goal'}</div>
-                  <div className="font-semibold">
-                    {autopilot.monthsToGoal ? `${autopilot.monthsToGoal} ${language === 'de' ? 'Monate' : 'months'}` : '-'}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-xs opacity-60">
-                {language === 'de' ? 'Kein aktives Sparziel vorhanden.' : 'No active savings goal found.'}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="card bg-base-100 border border-base-200 p-4 sm:p-5 shadow-sm">
-        <div className="text-sm font-semibold mb-3">
-          {language === 'de' ? 'Proaktive AI-Aktionen' : 'Proactive AI Actions'}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <button
-            className="btn btn-outline btn-sm justify-start"
-            onClick={() =>
-              runQuickPrompt(language === 'de' ? 'Finde 3 konkrete Einsparungen fuer diese Woche basierend auf meinen Ausgaben.' : 'Find 3 concrete savings opportunities for this week based on my spending.')
-            }
-          >
-            {language === 'de' ? '3 Einsparungen finden' : 'Find 3 savings'}
-          </button>
-          <button
-            className="btn btn-outline btn-sm justify-start"
-            onClick={() =>
-              runQuickPrompt(language === 'de' ? 'Erstelle mir einen Wochenplan mit taeglichen Finanzaktionen.' : 'Create a weekly plan with daily financial actions.')}
-          >
-            {language === 'de' ? 'Wochenplan erstellen' : 'Build weekly plan'}
-          </button>
-          <button
-            className="btn btn-outline btn-sm justify-start"
-            onClick={() =>
-              runQuickPrompt(language === 'de' ? `Berechne eine sinnvolle automatische Sparquote fuer mein Ziel ${autopilot.selectedGoal?.name || ''}.` : `Suggest an optimal auto-save rate for my goal ${autopilot.selectedGoal?.name || ''}.`)
-            }
-          >
-            {language === 'de' ? 'Autopilot optimieren' : 'Optimize autopilot'}
-          </button>
-        </div>
-      </div>
-
-      {/* Charts row - Mobile stacked */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4 animate-children">
-        {/* Area chart */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
-          <div className="flex items-center justify-between mb-4 sm:mb-5">
-            <div className="text-sm font-semibold">{language === 'de' ? 'Monatsverlauf' : 'Monthly Overview'}</div>
             <div className="hidden sm:flex items-center gap-3 text-xs opacity-40">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-success inline-block animate-pulse" />
@@ -406,43 +296,45 @@ export default function Dashboard({
               </span>
             </div>
           </div>
-            <ChartArea monthly={monthly} colors={colors} language={language} fmt={fmt} cur={cur} />
-        </div>
-
-        {/* Category list */}
-        <div className="card bg-base-100 shadow-sm border border-base-200 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
-          <div className="text-sm font-semibold mb-4">{language === 'de' ? 'Top Ausgaben' : 'Top Expenses'}</div>
-          {byCat.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 sm:h-40 opacity-30 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-              {language === 'de' ? 'Keine Ausgaben' : 'No Expenses'}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {byCat.slice(0, 6).map((ct, i) => (
-                <div key={ct.name} className="group animate-in fade-in slide-in-from-left-2 duration-500 hover-float" style={{ animationDelay: `${100 + i * 50}ms` }}>
-                  <div className="flex items-center justify-between mb-1 group-hover:opacity-100 transition-opacity duration-200">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="opacity-30 font-mono text-[10px] w-4 font-bold">{i + 1}</span>
-                      <span className="opacity-60 text-base group-hover:scale-110 transition-transform duration-200">{ct.icon}</span>
-                      <span className="font-medium opacity-80 truncate max-w-25 group-hover:opacity-100">{ct.name}</span>
-                    </div>
-                    <span className="text-xs font-bold opacity-70 group-hover:opacity-100 transition-opacity">{fmt(ct.value, cur)}</span>
+          <ChartArea monthly={monthly} colors={colors} language={language} fmt={fmt} cur={cur} />
+        </div>     <div className="card bg-base-100 shadow-sm border border-base-200 p-4 sm:p-5 animate-in fade-in slide-in-from-bottom-4 duration-700 hover-lift">
+        <div className="text-sm font-semibold mb-4">{language === 'de' ? 'Top Ausgaben' : 'Top Expenses'}</div>
+        {byCat.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 sm:h-40 opacity-30 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            {language === 'de' ? 'Keine Ausgaben' : 'No Expenses'}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {byCat.slice(0, 6).map((ct, i) => (
+              <div key={ct.name} className="group animate-in fade-in slide-in-from-left-2 duration-500 hover-float" style={{ animationDelay: `${100 + i * 50}ms` }}>
+                <div className="flex items-center justify-between mb-1 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="opacity-30 font-mono text-[10px] w-4 font-bold">{i + 1}</span>
+                    <span className="opacity-60 text-base group-hover:scale-110 transition-transform duration-200">{ct.icon}</span>
+                    <span className="font-medium opacity-80 truncate max-w-25 group-hover:opacity-100">{ct.name}</span>
                   </div>
-                  <div className="w-full h-1.5 bg-base-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-1.5 rounded-full transition-all duration-500 shadow-sm"
-                      style={{ width: `${ct.value / (byCat[0]?.value || 1) * 100}%`, background: ct.color }}
-                    />
-                  </div>
+                  <span className="text-xs font-bold opacity-70 group-hover:opacity-100 transition-opacity">{fmt(ct.value, cur)}</span>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="w-full h-1.5 bg-base-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-1.5 rounded-full transition-all duration-500 shadow-sm"
+                    style={{ width: `${ct.value / (byCat[0]?.value || 1) * 100}%`, background: ct.color }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      </div>
+
+     
+
+      {/* Category list */}
+ 
     </div>
   );
 }
