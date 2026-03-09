@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { prisma } from './prisma';
 
 function isFirebaseAdminConfigError(err: unknown): boolean {
   const msg = String((err as any)?.message || err || '');
@@ -59,18 +60,34 @@ export async function verifyFirebaseToken(req: NextRequest): Promise<string | nu
  * TEMPORARY: For testing purposes, return a mock user ID if in development
  */
 export async function getAuthenticatedUserId(req: NextRequest): Promise<string> {
+  const ensureUserExists = async (uid: string) => {
+    const safeUid = String(uid).replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fallbackEmail = `firebase-${safeUid}@local.smartbudget`;
+    await prisma.user.upsert({
+      where: { id: uid },
+      update: {},
+      create: {
+        id: uid,
+        email: fallbackEmail,
+      },
+    });
+  };
+
   // Local dev bypass:
   // enabled by default in non-production, unless explicitly disabled.
   if (
     process.env.NODE_ENV !== 'production' &&
     process.env.ALLOW_DEV_AUTH_BYPASS !== 'false'
   ) {
-    return 'cjld2cjxh0000qzrmn831i7rn';
+    const devUserId = 'cjld2cjxh0000qzrmn831i7rn';
+    await ensureUserExists(devUserId);
+    return devUserId;
   }
 
   const userId = await verifyFirebaseToken(req);
   if (!userId) {
     throw new Error('Unauthorized');
   }
+  await ensureUserExists(userId);
   return userId;
 }
