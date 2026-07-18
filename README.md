@@ -238,7 +238,7 @@ smartbudget/
 1. Fork repository
 2. Create branch
 3. Commit changes
-4. Open pull request
+4. Open pull request.
 
 ## License
 
