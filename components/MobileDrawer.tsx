@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import React from 'react';
-import Sidebar, { SidebarProps } from './Sidebar';
+import { X } from "lucide-react";
+import Sidebar from "./Sidebar";
 
 export interface MobileDrawerProps {
   open: boolean;
@@ -9,53 +9,24 @@ export interface MobileDrawerProps {
   taxResult: any;
   txsLength: number;
   tab: string;
-  setTab: (t: string) => void;
+  setTab: (tab: string) => void;
 }
 
-export default function MobileDrawer({
-  open,
-  onClose,
-  taxResult,
-  txsLength,
-  tab,
-  setTab,
-}: MobileDrawerProps) {
+export default function MobileDrawer({ open, onClose, taxResult, txsLength, tab, setTab }: MobileDrawerProps) {
   return (
-    <div className={`fixed inset-0 z-40 lg:hidden ${open ? '' : 'pointer-events-none'}`}>
-      {/* overlay */}
-      <div
-        className={`absolute inset-0 bg-black/40 transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}
-        onClick={onClose}
-      />
-
-      {/* sliding panel */}
-      <div
-        className={`absolute left-0 top-0 h-full bg-sidebar w-[85vw] max-w-sm transform transition-transform shadow-xl border-r border-sidebar-border
-          ${open ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <button
-          className="absolute top-3 right-3 btn btn-ghost btn-sm btn-square hover:bg-base-200/50 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px]"
-          onClick={onClose}
-          aria-label="Close sidebar"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+    <div className={`sb-mobile-drawer-overlay lg:hidden${open ? " is-open" : ""}`} aria-hidden={!open}>
+      <button className="absolute inset-0" onClick={onClose} aria-label="Close navigation" />
+      <div className="sb-mobile-drawer">
+        <button className="sb-mobile-close" onClick={onClose} aria-label="Close sidebar">
+          <X className="size-4" />
         </button>
-
-        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-base-300 dark:scrollbar-thumb-base-700">
+        <div className="h-full overflow-y-auto pr-12">
           <Sidebar
             taxResult={taxResult}
             txsLength={txsLength}
             tab={tab}
-            setTab={(t) => {
-              setTab(t);
+            setTab={(nextTab) => {
+              setTab(nextTab);
               onClose();
             }}
             onNavigate={onClose}

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const appUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.SITE_URL ||
@@ -75,7 +77,12 @@ const nextConfig = {
       {
         source: '/_next/static/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          {
+            key: 'Cache-Control',
+            value: isDevelopment
+              ? 'no-store, no-cache, must-revalidate'
+              : 'public, max-age=31536000, immutable',
+          },
         ],
       },
       // Next image optimizer responses

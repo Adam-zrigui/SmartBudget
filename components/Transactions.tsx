@@ -186,7 +186,7 @@ export default memo(function Transactions({
             </select>
 
             {/* Type toggle - Better mobile layout */}
-            <div className="flex rounded-lg overflow-hidden border border-base-300 w-full sm:w-auto">
+            <div className="flex rounded-lg overflow-hidden border border-base-300 w-full sm:w-auto sm:shrink-0">
               {[
                 { v: 'all', l: language === 'de' ? 'Alle' : 'All' },
                 { v: 'income', l: language === 'de' ? 'Einnahmen' : 'Income' },
@@ -195,7 +195,7 @@ export default memo(function Transactions({
                 <button
                   key={t.v}
                   onClick={() => setFType(t.v)}
-                  className={`flex-1 sm:px-3 px-2 py-2 text-xs font-medium transition-all duration-200 ${
+                  className={`flex-1 sm:flex-none sm:px-3 px-2 py-2 text-xs font-medium transition-all duration-200 ${
                     fType === t.v
                       ? 'bg-primary text-primary-content dark:bg-secondary dark:text-secondary-content shadow-md'
                       : 'bg-base-100 hover:bg-base-200 opacity-60 hover:opacity-100'
@@ -207,7 +207,7 @@ export default memo(function Transactions({
             </div>
 
             {/* Balance badge - Right aligned */}
-            <div className={`ml-auto text-sm font-bold px-3 py-2 rounded-lg transition-all duration-300 shadow-sm ${bal >= 0 ? 'bg-success/10 text-success hover:shadow-md' : 'bg-error/10 text-error hover:shadow-md'}`}>
+            <div className={`ml-auto shrink-0 text-sm font-bold px-3 py-2 rounded-lg transition-all duration-300 shadow-sm ${bal >= 0 ? 'bg-success/10 text-success hover:shadow-md' : 'bg-error/10 text-error hover:shadow-md'}`}>
               {bal >= 0 ? '+' : '-'}{fmt(bal, cur)}
             </div>
           </div>

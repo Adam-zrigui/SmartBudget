@@ -9,7 +9,7 @@ import {
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   // enforce sensible defaults but allow overrides via props
   return (
-    <NextThemesProvider {...props} defaultTheme="system" enableSystem>
+    <NextThemesProvider {...props} defaultTheme="dark" enableSystem>
       {children}
     </NextThemesProvider>
   )

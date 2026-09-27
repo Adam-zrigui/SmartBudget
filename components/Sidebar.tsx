@@ -1,37 +1,74 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react";
-import { IC, fmt, calcGermanTax } from "@/lib/utils";
-import { SVGIcon as SVG } from "./SVGIcon";
-import { useLanguageStore } from "@/lib/store";
-import { translations } from "@/lib/translations";
+import { useEffect, useState, type ComponentType, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { authedFetch } from "@/lib/client-auth";
+import { useTheme } from "next-themes";
+import {
+  ArrowLeftRight,
+  BarChart3,
+  Bot,
+  ChevronRight,
+  Coins,
+  Database,
+  FileText,
+  Landmark,
+  LayoutDashboard,
+  Moon,
+  Repeat2,
+  Settings,
+  ShieldCheck,
+  Sun,
+  Target,
+  TrendingUp,
+  UserRound,
+  WalletCards,
+} from "lucide-react";
+import { fmt } from "@/lib/utils";
+import { useLanguageStore } from "@/lib/store";
+import { translations } from "@/lib/translations";
+import { useAuth } from "@/components/AuthContext";
+import BrandMark from "@/components/BrandMark";
 
 export interface SidebarProps {
   taxResult: any;
   txsLength: number;
   tab: string;
-  setTab: (t: string) => void;
-  onNavigate?: () => void; // callback for mobile to close drawer when navigation occurs
+  setTab: (tab: string) => void;
+  onNavigate?: () => void;
 }
 
-const TABS = [
-  { id: "dashboard", ic: IC.dash },
-  { id: "transactions", ic: IC.list },
-  { id: "analytics", ic: IC.chart },
-  { id: "budget", ic: IC.budget },
-  { id: "goals", ic: IC.goals },
-  { id: "recurring", ic: IC.recurring },
-  { id: "investments", ic: IC.investments },
-  { id: "currency", ic: IC.currency },
-  { id: "tax", ic: IC.tax },
-  { id: "advisor", ic: IC.chat },
-  { id: "profile", ic: IC.user },
+type NavItem = {
+  id: string;
+  icon: ComponentType<{ className?: string; strokeWidth?: number }>;
+  en: string;
+  de: string;
+  full?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
+  { id: "dashboard", icon: LayoutDashboard, en: "Dashboard", de: "Übersicht" },
+  { id: "transactions", icon: ArrowLeftRight, en: "Transactions", de: "Buchungen" },
+  { id: "analytics", icon: BarChart3, en: "Analytics", de: "Analyse" },
+  { id: "budget", icon: WalletCards, en: "Budget", de: "Budget" },
+  { id: "goals", icon: Target, en: "Goals", de: "Ziele" },
+  { id: "recurring", icon: Repeat2, en: "Recurring", de: "Daueraufträge" },
+  { id: "investments", icon: TrendingUp, en: "Investments", de: "Investitionen" },
+  { id: "currency", icon: Coins, en: "Currency", de: "Währungen" },
+  { id: "tax", icon: Landmark, en: "Tax", de: "Steuer" },
+  { id: "advisor", icon: Bot, en: "AI advisor", de: "Beratung" },
+  { id: "profile", icon: UserRound, en: "Profile", de: "Profil" },
 ];
 
-import { useTheme } from 'next-themes';
+const PRIMARY_COUNT = 6;
+const PRIMARY_ITEMS = NAV_ITEMS.slice(0, PRIMARY_COUNT);
+const SECONDARY_ITEMS = NAV_ITEMS.slice(PRIMARY_COUNT);
+
+const LEGAL_LINKS = [
+  { href: "/legal/privacy", icon: ShieldCheck, en: "Privacy", de: "Datenschutz" },
+  { href: "/legal/terms", icon: FileText, en: "Terms", de: "Bedingungen" },
+  { href: "/legal/data-processing", icon: Database, en: "Data", de: "Daten" },
+];
 
 export default function Sidebar({
   taxResult,
@@ -40,228 +77,146 @@ export default function Sidebar({
   setTab,
   onNavigate,
 }: SidebarProps) {
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isDark = mounted && resolvedTheme === 'dark';
-  
   const pathname = usePathname();
+  const language = useLanguageStore((state) => state.language);
+  const setLanguage = useLanguageStore((state) => state.setLanguage);
+  const { user } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  
-  const language = useLanguageStore((s) => s.language);
-  const setLanguage = useLanguageStore((s) => s.setLanguage);
+  useEffect(() => setMounted(true), []);
+
+  const isDark = mounted && resolvedTheme === "dark";
+  const currentPath = pathname || "/dashboard";
+  const userName = user?.displayName || (language === "de" ? "Mein Budget" : "My budget");
+  const netMonthly = Number(taxResult?.netMonthly || 0);
   const t = translations[language];
+  const isDashboardView = currentPath === "/" || currentPath === "/dashboard";
 
-  const [fallbackNet, setFallbackNet] = useState<number | null>(null);
-
-  // If the provided taxResult is empty (dev/unauth), try to derive a net monthly
-  // from persisted income transactions so the sidebar shows realistic numbers.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        if (taxResult && taxResult.netMonthly > 0) return;
-        const res = await authedFetch('/api/transactions?type=income');
-        if (!res.ok) return;
-        const data = await res.json();
-        const months: Record<string, number> = {};
-        (data || []).forEach((tx: any) => {
-          const d = new Date(tx.date);
-          const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-          months[key] = (months[key] || 0) + (tx.amount || 0);
-        });
-        const vals = Object.values(months);
-        if (vals.length === 0) return;
-        const avg = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100;
-        const taxRes = await calcGermanTax({ grossMonthly: avg, taxClass: 1, state: 'NW', kirchenmitglied: false, hasKinder: false });
-        if (cancelled) return;
-        setFallbackNet(taxRes.netMonthly || null);
-      } catch (err) {
-        // ignore
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [txsLength, taxResult]);
+  const navigateToTab = (event: MouseEvent<HTMLAnchorElement>, nextTab: string) => {
+    onNavigate?.();
+    if (!isDashboardView || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    setTab(nextTab);
+    const nextUrl = nextTab === "dashboard" ? "/dashboard" : `/dashboard?tab=${nextTab}`;
+    window.history.pushState(null, "", nextUrl);
+  };
 
   return (
-    <aside className="w-full max-w-sm bg-sidebar border-r border-sidebar-border flex flex-col h-screen overflow-y-auto sticky top-0 shadow-lg relative scrollbar-thin scrollbar-thumb-base-300 dark:scrollbar-thumb-base-700">
-      {/* close button for mobile drawer */}
-      <div className="lg:hidden absolute top-3 right-3 z-10">
-        <label htmlFor="sidebar-toggle" className="btn btn-ghost btn-sm btn-square hover:bg-base-200/50 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px]">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </label>
-      </div>
-      {/* Brand */}
-      <div className="px-4 sm:px-6 pt-6 sm:pt-8 pb-4 sm:pb-6 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary dark:bg-white flex items-center justify-center text-primary-content dark:text-black font-bold text-sm flex-shrink-0">
-            H
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-bold text-sm sm:text-base tracking-tight text-base-content dark:text-base-100 truncate">{t.sidebar.brand}</div>
-            <div className="text-xs opacity-40 dark:opacity-60 text-base-content dark:text-base-300 truncate">{t.sidebar.subtitle}</div>
-          </div>
+    <aside className="sb-sidebar">
+      <div className="sb-rail-brand">
+        <BrandMark />
+        <div className="sb-rail-brand-copy">
+          <div className="sb-brand-name">SmartBudget</div>
+          <div className="sb-brand-kicker">Personal finance</div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 sm:py-5 space-y-1 overflow-y-auto">
-        {TABS.map((tabItem) => {
-          const tabLabel = translations[language].sidebar.tabs[tabItem.id]?.label || tabItem.id;
-          const tabHint = translations[language].sidebar.tabs[tabItem.id]?.hint || '';
-          
-          // Routes for page-based navigation
-          const pageRoutes = ['dashboard', 'transactions', 'analytics', 'budget', 'goals', 'recurring', 'investments', 'currency', 'tax', 'advisor', 'profile'];
-          const isPageRoute = pageRoutes.includes(tabItem.id);
-          
-          // Check if current route matches tab
-          const isActive = tabItem.id === 'dashboard' ? pathname === '/' : pathname === `/${tabItem.id}`;
-          
-          const navClasses = `w-full flex items-center gap-3 px-3 sm:px-4 py-3 sm:py-3 rounded-xl text-left transition-all duration-300 group transform hover:scale-[1.02] focus:outline-none focus-visible:ring focus-visible:ring-primary/50 min-h-[48px]
-            ${isActive
-              ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-4 border-primary pl-3 shadow-sm"
-              : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-70 group-hover:opacity-100"
-            }`;
-          
-          const navContent = (
-            <>
-              <span className={`transition-opacity flex-shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
-                <SVG d={tabItem.ic} size={18} />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium ${isActive ? "font-semibold" : "opacity-80"}`}>{tabLabel}</div>
-                <div className={`text-xs truncate ${isActive ? "opacity-60" : "opacity-40"}`}>{tabHint}</div>
-              </div>
-            </>
-          );
-          
-          if (isPageRoute) {
-            return (
-              <Link
-                key={tabItem.id}
-                href={tabItem.id === 'dashboard' ? '/' : `/${tabItem.id}`}
-                className={navClasses}
-                onClick={onNavigate}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                {navContent}
-              </Link>
-            );
-          } else {
-            return (
-              <button
-                key={tabItem.id}
-                onClick={() => {
-                  setTab(tabItem.id);
-                  onNavigate?.();
-                }}
-                className={navClasses}
-              >
-                {navContent}
-              </button>
-            );
-          }
-        })}
-      </nav>
-
-      {/* Legal & Features Section */}
-      <div className="px-3 pb-3 border-t border-base-300 dark:border-base-700">
-        <div className="pt-3 pb-2">
-          <div className="text-xs opacity-40 dark:opacity-60 uppercase tracking-wider font-medium px-1">
-            {language === 'de' ? 'Rechtliches & Features' : 'Legal & Features'}
+      <Link href="/dashboard?tab=profile" onClick={(event) => navigateToTab(event, "profile")} className="sb-profile">
+        <div className="sb-avatar">
+          {user?.photoURL ? <img src={user.photoURL} alt="" /> : userName.charAt(0).toUpperCase()}
+        </div>
+        <div className="sb-profile-copy">
+          <div className="sb-profile-name">{userName}</div>
+          <div className="sb-profile-meta">
+            {netMonthly > 0
+              ? `${t.sidebar.netSalary} ${fmt(netMonthly)}`
+              : `${txsLength} ${language === "de" ? "Buchungen" : "entries"}`}
           </div>
         </div>
-        <nav className="space-y-1">
-          {[
-            {
-              href: '/legal/privacy',
-              label: language === 'de' ? 'Datenschutz' : 'Privacy Policy',
-              hint: language === 'de' ? 'GDPR konform' : 'GDPR compliant',
-              icon: '🔒'
-            },
-            {
-              href: '/legal/terms',
-              label: language === 'de' ? 'Nutzungsbedingungen' : 'Terms of Service',
-              hint: language === 'de' ? 'Regeln & Haftung' : 'Rules & liability',
-              icon: '📋'
-            },
-            {
-              href: '/legal/data-processing',
-              label: language === 'de' ? 'Datenverarbeitung' : 'Data Processing',
-              hint: language === 'de' ? 'Wie wir Daten nutzen' : 'How we use data',
-              icon: '📊'
-            }
-          ].map((item) => {
-            const isActive = pathname === item.href;
-            const navClasses = `w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 rounded-lg text-left transition-all duration-300 group transform hover:scale-[1.02] min-h-[44px]
-              ${isActive
-                ? "bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary border-l-3 border-primary pl-3 shadow-sm"
-                : "hover:bg-base-300 dark:hover:bg-base-300/20 text-base-content opacity-60 group-hover:opacity-100"
-              }`;
+        <Settings className="size-3.5 opacity-40" />
+      </Link>
+
+      <nav className="sb-sidebar-nav" aria-label="Main navigation">
+        <div className="sb-nav-label">{language === "de" ? "Hauptnavigation" : "Main navigation"}</div>
+        <div className="sb-rail-grid">
+          {PRIMARY_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.id === "dashboard"
+              ? isDashboardView && (!tab || tab === "dashboard")
+              : currentPath === `/${item.id}` || (isDashboardView && tab === item.id);
+            const href = item.id === "dashboard" ? "/dashboard" : `/dashboard?tab=${item.id}`;
 
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={navClasses}
-                aria-current={isActive ? 'page' : undefined}
+                key={item.id}
+                href={href}
+                onClick={(event) => navigateToTab(event, item.id)}
+                className={`sb-rail-tile${isActive ? " is-active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
               >
-                <span className={`text-base sm:text-lg transition-opacity flex-shrink-0 ${isActive ? "opacity-100" : "opacity-60 group-hover:opacity-80"}`}>
-                  {item.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium ${isActive ? "font-semibold" : "opacity-80"}`}>{item.label}</div>
-                  <div className={`text-xs truncate ${isActive ? "opacity-60" : "opacity-40"}`}>{item.hint}</div>
-                </div>
+                <span className="sb-rail-icon"><Icon /></span>
+                <span className="sb-rail-label">{item[language]}</span>
               </Link>
             );
           })}
-        </nav>
-      </div>
-
-      {/* Stats strip */}
-      <div className="mx-3 mb-3 p-3 bg-base-100 dark:bg-base-700 rounded-xl border border-base-300 dark:border-base-600 hover:shadow-md transition-all duration-500 animate-in fade-in slide-in-from-bottom-2 select-none text-base-content dark:text-base-100" tabIndex={0}>
-        <div className="text-xs opacity-40 dark:opacity-60 mb-1 uppercase tracking-wider font-medium">{t.sidebar.netSalary}</div>
-        <div className="text-xl font-bold tracking-tight">{fmt(taxResult.netMonthly || (fallbackNet ?? 0))}</div>
-        <div className="text-xs opacity-50 dark:opacity-70 mt-0.5">{txsLength} {t.sidebar.totalEntries}</div>
-      </div>
-
-      {/* Controls */}
-      <div className="px-3 pb-4 sm:pb-5 space-y-3">
-        {/* Language selector */}
-        <div className="flex gap-1 rounded-lg overflow-hidden border border-base-300 dark:border-base-600">
-          {(['de', 'en'] as const).map((lang) => (
-            <button
-              key={lang}
-              onClick={() => setLanguage(lang)}
-              className={`flex-1 py-2.5 text-xs font-medium transition-all duration-200 min-h-[44px] ${
-                language === lang
-                  ? 'bg-primary dark:bg-secondary text-primary-content dark:text-secondary-content'
-                  : 'bg-base-100 dark:bg-base-700 hover:bg-base-200 dark:hover:bg-base-600 opacity-60 hover:opacity-100 text-base-content dark:text-base-100'
-              }`}
-              title={lang === 'de' ? 'Deutsch' : 'English'}
-            >
-              {lang.toUpperCase()}
-            </button>
-          ))}
         </div>
 
-        {/* Theme toggle */}
-        <div className="flex items-center justify-start">
-          {mounted && (
-            <button
-              className="btn btn-ghost btn-sm btn-square hover:scale-110 active:scale-95 transition-all duration-300 transform dark:hover:bg-base-700 min-h-[44px] min-w-[44px]"
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              title={isDark ? t.header.lightMode : t.header.darkMode}
-            >
-              <div className={`transition-transform duration-300 ${isDark ? 'rotate-0' : 'rotate-180'}`}>
-                <SVG d={isDark ? IC.sun : IC.moon} size={18} />
-              </div>
-            </button>
-          )}
+        <div className="sb-nav-label sb-rail-label-spaced">{language === "de" ? "Mehr" : "More"}</div>
+        <div className="sb-rail-list">
+          {SECONDARY_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentPath === `/${item.id}` || (isDashboardView && tab === item.id);
+            const href = item.id === "dashboard" ? "/dashboard" : `/dashboard?tab=${item.id}`;
+
+            return (
+              <Link
+                key={item.id}
+                href={href}
+                onClick={(event) => navigateToTab(event, item.id)}
+                className={`sb-rail-row${isActive ? " is-active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon />
+                <span>{item[language]}</span>
+              </Link>
+            );
+          })}
         </div>
+      </nav>
+
+      <div className="sb-sidebar-footer">
+        <div className="sb-assistant-card">
+          <div className="sb-assistant-head">
+            <div className="sb-assistant-icon"><Bot className="size-4" /></div>
+            <div className="sb-profile-copy">
+              <div className="sb-profile-name">Smart assistant</div>
+              <div className="sb-profile-meta">{language === "de" ? "Bereit für deine Ziele" : "Ready for your goals"}</div>
+            </div>
+            <span className="sb-status-dot" />
+          </div>
+          <div className="sb-sidebar-tools">
+            <button
+              className="sb-tool-button is-selected"
+              onClick={() => setLanguage(language === "de" ? "en" : "de")}
+              aria-label={language === "de" ? "Switch to English" : "Auf Deutsch wechseln"}
+            >
+              {language.toUpperCase()}
+            </button>
+            <button className="sb-tool-button" onClick={() => setTheme(isDark ? "light" : "dark")}>
+              {isDark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+              {isDark ? "Light" : "Dark"}
+            </button>
+          </div>
+        </div>
+
+        <details className="sb-legal">
+          <summary>
+            {language === "de" ? "Rechtliches" : "Legal"}
+            <ChevronRight className="size-3" />
+          </summary>
+          <div className="sb-legal-links">
+            {LEGAL_LINKS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link key={item.href} href={item.href} onClick={onNavigate} className="flex items-center gap-2">
+                  <Icon className="size-3" />
+                  {item[language]}
+                </Link>
+              );
+            })}
+          </div>
+        </details>
       </div>
     </aside>
   );

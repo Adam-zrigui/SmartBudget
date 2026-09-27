@@ -1,10 +1,8 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import SmartBudgetApp from '@/components/SmartBudgetApp'
 
-// ISR: Revalidate every hour
 export const revalidate = 3600
 
-// SEO Metadata
 export const metadata: Metadata = {
   title: 'Dashboard',
   description: 'Track your finances, view spending trends, and get AI-powered insights on your money management.',
@@ -15,6 +13,6 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Home() {
-  redirect('/dashboard')
+export default function DashboardPage() {
+  return <SmartBudgetApp />
 }

@@ -14,15 +14,15 @@ export const viewport: Viewport = {
   userScalable: true,
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' }
+    { media: '(prefers-color-scheme: light)', color: '#f2f3ee' },
+    { media: '(prefers-color-scheme: dark)', color: '#030303' }
   ]
 }
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   alternates: {
-    canonical: '/',
+    canonical: '/dashboard',
   },
   title: {
     default: 'SmartBudget - Intelligent Personal Finance Management',
@@ -75,9 +75,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-light-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-dark-32x32.png', sizes: '32x32', type: 'image/png' },
     ],
     apple: '/apple-icon.png',
   },
@@ -102,7 +102,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="SmartBudget" />
-        <meta name="msapplication-TileColor" content="#2d2d2d" />
+        <meta name="msapplication-TileColor" content="#030303" />
+        <link rel="preload" href="/fonts/satoshi-regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/satoshi-medium.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="alternate" hrefLang="en" href={siteUrl} />
         <link rel="alternate" hrefLang="de" href={`${siteUrl}/de`} />
         {/* Preload social image to reduce preview/LCP latency when first requested */}

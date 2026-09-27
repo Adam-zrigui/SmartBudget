@@ -42,7 +42,7 @@ export const DynamicAdvisor = dynamic(() => import('@/components/Advisor'), {
   ssr: false, // Chat interface doesn't need SSR
 });
 
-export const DynamicBudgetTracker = dynamic(() => import('@/components/BudgetTracker'), {
+export const DynamicBudgetTracker = dynamic(() => import('@/components/SmartBudgetApp'), {
   loading: () => <DynamicLoadingSkeleton />,
   ssr: true,
 });

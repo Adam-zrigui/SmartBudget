@@ -1,279 +1,192 @@
-'use client';
+"use client";
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { useLanguageStore } from '@/lib/store';
-import { useTranslations } from '@/lib/translations';
-import { Suspense, useState } from 'react';
-import { auth } from '@/lib/firebase';
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-} from 'firebase/auth';
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { ArrowUpRight, Check, LockKeyhole, Sparkles, TrendingUp } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { useLanguageStore } from "@/lib/store";
+import { useTranslations } from "@/lib/translations";
+
+function BrandMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-[11px] bg-[#b3ff83] text-[#030303] ${small ? "size-8" : "size-10"}`}>
+      <svg viewBox="0 0 32 32" className={small ? "size-6" : "size-8"} aria-hidden="true">
+        <path
+          d="M6 8.5h12.4c4.9 0 7.6 2.4 7.6 6.1 0 2.7-1.5 4.7-4 5.7 3.2.8 5 2.9 5 5.8 0 4.1-3.1 6.4-8.4 6.4H6V8.5Zm10.8 9.7c2.1 0 3.3-.8 3.3-2.4 0-1.5-1.2-2.3-3.3-2.3h-5v4.7h5Zm.7 9.1c2.4 0 3.7-.9 3.7-2.7 0-1.7-1.3-2.6-3.7-2.6h-5.7v5.3h5.7Z"
+          fill="currentColor"
+        />
+      </svg>
+    </span>
+  );
+}
 
 function SignInContent() {
   const router = useRouter();
   const toast = useToast();
   const params = useSearchParams();
-  const callbackUrl = params.get('callbackUrl') || '/';
+  const callbackUrl = params.get("callbackUrl") || "/";
   const [isLoading, setIsLoading] = useState(false);
-
-  const language = useLanguageStore((s) => s.language);
+  const language = useLanguageStore((state) => state.language);
   const t = useTranslations(language);
 
   const handleGoogle = async () => {
     setIsLoading(true);
     try {
       const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      // set token cookie immediately instead of waiting for AuthContext effect
       const idToken = await result.user.getIdToken();
-      {
-        const res = await fetch('/api/auth/set-token', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: idToken }),
-        });
-        if (!res.ok) {
-          console.error('failed to store token cookie', await res.text());
-          throw new Error('Token cookie set failed');
-        }
+      const response = await fetch("/api/auth/set-token", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+      });
+      if (!response.ok) throw new Error("Token cookie set failed");
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const verifyResponse = await fetch("/api/auth/verify", { credentials: "include" });
+      if (!verifyResponse.ok) {
+        throw new Error(
+          language === "de"
+            ? "Anmeldung unvollständig. Bitte Firebase-Server-Konfiguration prüfen."
+            : "Sign-in incomplete. Please check your Firebase server configuration."
+        );
       }
 
-      // give browser more time to persist httpOnly cookie on production (Vercel)
-      // and verify by making a small request
-      await new Promise((r) => setTimeout(r, 200));
-      
-      // Verify token is accessible before redirecting.
-      // In production, do not continue if verification fails,
-      // otherwise the app lands in repeated 401 API loops.
-      try {
-        const verifyRes = await fetch('/api/auth/verify', {
-          credentials: 'include',
-        });
-        if (!verifyRes.ok) {
-          const verifyText = await verifyRes.text();
-          console.error('Token verification failed:', verifyText);
-          throw new Error(
-            language === 'de'
-              ? 'Anmeldung unvollstaendig. Bitte Firebase-Server-Konfiguration pruefen.'
-              : 'Sign-in incomplete. Please check Firebase server configuration.'
-          );
-        }
-      } catch (e) {
-        console.error('Could not verify token:', e);
-        throw e instanceof Error ? e : new Error('Token verification failed');
-      }
-
-      console.log('callbackUrl', callbackUrl);
-      
-      toast.toast({ title: language === 'de' ? 'Erfolgreich eingeloggt' : 'Successfully signed in' });
-      // Use router.replace instead of location.href for smoother navigation
+      toast.toast({ title: language === "de" ? "Erfolgreich eingeloggt" : "Successfully signed in" });
       router.replace(callbackUrl);
-    } catch (err: any) {
-      toast.toast({ title: err.message || 'Sign in failed', variant: 'destructive' });
+    } catch (error: any) {
+      toast.toast({ title: error?.message || "Sign in failed", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const features = [
-    {
-      icon: '📊',
-      title: language === 'de' ? 'Finanzübersicht' : 'Finance Overview',
-      desc: language === 'de' ? 'Alle Ihre Konten an einem Ort' : 'All your accounts in one place',
-    },
-    {
-      icon: '🤖',
-      title: language === 'de' ? 'KI-Assistent' : 'AI Assistant',
-      desc: language === 'de' ? 'Intelligente Finanzberatung' : 'Intelligent financial advice',
-    },
-    {
-      icon: '📈',
-      title: language === 'de' ? 'Analytics' : 'Analytics',
-      desc: language === 'de' ? 'Detaillierte Berichte & Trends' : 'Detailed reports & trends',
-    },
+  const benefits = [
+    language === "de" ? "Alle Konten in einer ruhigen, klaren Ansicht" : "Every account in one calm, clear view",
+    language === "de" ? "Budgets, Trends und Sparziele ohne Tabellenchaos" : "Budgets, trends, and goals without spreadsheet chaos",
+    language === "de" ? "Ein KI-Berater, der deine nächsten Schritte erklärt" : "An AI advisor that explains your next best step",
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-50 to-base-100 dark:from-base-900 dark:via-base-800 dark:to-base-900 overflow-hidden relative flex items-center justify-center">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '4s' }}></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-secondary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
-        <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }}></div>
+    <main className="relative min-h-screen overflow-hidden bg-[#030303] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-32 -top-40 size-[560px] rounded-full bg-[#b3ff83]/[0.09] blur-[110px]" />
+        <div className="absolute -bottom-64 -left-32 size-[560px] rounded-full bg-[#83b8ff]/[0.07] blur-[120px]" />
+        <div className="absolute inset-0 opacity-[0.025] [background-image:linear-gradient(rgba(255,255,255,.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:64px_64px]" />
       </div>
 
-      {/* Main content */}
-      <div className="relative z-10 w-full flex flex-col items-center justify-center gap-6 sm:gap-8 px-4 py-8 sm:py-12 max-w-6xl">
-        {/* Language Selector - Top Right on desktop, top center on mobile */}
-        <div className="w-full flex justify-center sm:justify-end sm:absolute sm:top-4 sm:right-4">
-          <div className="flex gap-1 rounded-lg overflow-hidden border border-white/20 dark:border-base-700/30 bg-white/30 dark:bg-base-800/40 backdrop-blur-sm">
-            {(['de', 'en'] as const).map((lang) => (
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1240px] flex-col px-5 py-6 sm:px-8 lg:px-10">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <BrandMark />
+            <div>
+              <div className="text-[16px] font-semibold tracking-[-0.04em]">SmartBudget</div>
+              <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/30">Personal finance</div>
+            </div>
+          </div>
+          <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/[0.045] p-1">
+            {(["de", "en"] as const).map((locale) => (
               <button
-                key={lang}
-                onClick={() => useLanguageStore.setState({ language: lang })}
-                className={`px-4 py-2 text-sm font-semibold transition-all duration-200 min-h-[44px] ${
-                  language === lang
-                    ? 'bg-primary dark:bg-primary text-white'
-                    : 'bg-transparent hover:bg-white/20 dark:hover:bg-base-700/50 opacity-60 hover:opacity-100 text-base-content dark:text-base-100'
-                }`}
-                title={lang === 'de' ? 'Deutsch' : 'English'}
+                key={locale}
+                onClick={() => useLanguageStore.setState({ language: locale })}
+                className={`h-8 min-w-10 rounded-lg px-3 text-[10px] font-semibold transition ${language === locale ? "bg-white text-[#030303]" : "text-white/38 hover:text-white/70"}`}
               >
-                {lang.toUpperCase()}
+                {locale.toUpperCase()}
               </button>
             ))}
           </div>
-        </div>
+        </header>
 
-        {/* Mobile-first layout: Stack vertically */}
-        <div className="w-full max-w-md">
-          {/* Mobile Header - Compact */}
-          <div className="text-center lg:hidden mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                SmartBudget
-              </span>
+        <div className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20 lg:py-20">
+          <section className="max-w-[630px]">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#b3ff83]/20 bg-[#b3ff83]/[0.07] px-3 py-2 text-[10px] font-semibold text-[#b3ff83]">
+              <Sparkles className="size-3.5" />
+              {language === "de" ? "Finanzen, die sich leicht anfühlen" : "Money that feels refreshingly simple"}
+            </div>
+            <h1 className="max-w-[620px] text-[clamp(44px,6vw,76px)] font-medium leading-[0.96] tracking-[-0.07em]">
+              {language === "de" ? (
+                <>Dein Geld.<br /><span className="text-[#b3ff83]">Klarer gedacht.</span></>
+              ) : (
+                <>Your money.<br /><span className="text-[#b3ff83]">Clearly planned.</span></>
+              )}
             </h1>
-            <p className="text-base sm:text-lg opacity-60">
-              {language === 'de' ? 'Intelligente Finanzplanung' : 'Smart financial planning'}
+            <p className="mt-7 max-w-[520px] text-[14px] leading-6 text-white/42 sm:text-[15px]">
+              {language === "de"
+                ? "SmartBudget bringt Ausgaben, Budgets, Sparziele und vernünftige nächste Schritte in ein fokussiertes Erlebnis."
+                : "SmartBudget brings spending, budgets, goals, and sensible next steps into one focused experience."}
             </p>
-          </div>
 
-          {/* SignIn Card - Full width on mobile */}
-          <div className="w-full mb-6 animate-in fade-in-scale duration-700" style={{ animationDelay: '200ms' }}>
-            <div className="bg-white/60 dark:bg-base-900/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/20 dark:border-base-700/20 overflow-hidden hover:shadow-3xl transition-all duration-500">
-              {/* Card Header */}
-              <div className="px-6 sm:px-8 py-8 sm:py-10 bg-gradient-to-br from-primary/20 via-transparent to-secondary/20 border-b border-white/10 dark:border-base-700/10">
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2 animate-in fade-in slide-in-from-top-4 duration-700">{t.auth.signIn}</h2>
-                <p className="text-sm sm:text-base opacity-60 animate-in fade-in slide-in-from-top-4 duration-700" style={{ animationDelay: '100ms' }}>
-                  {language === 'de' ? 'Melden Sie sich an' : 'Sign in to your account'}
-                </p>
-              </div>
-
-              {/* Card Body */}
-              <div className="px-6 sm:px-8 py-6 sm:py-8 space-y-4">
-                <button
-                  onClick={handleGoogle}
-                  disabled={isLoading}
-                  className={`w-full py-4 px-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-3 mb-4 transform overflow-hidden relative group min-h-[48px] ${
-                    isLoading
-                      ? 'bg-primary/50 opacity-60 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-primary to-primary/80 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] text-white'
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  {isLoading ? (
-                    <>
-                      <span className="animate-spin">⏳</span>
-                      {language === 'de' ? 'Wird angemeldet...' : 'Signing in...'}
-                    </>
-                  ) : (
-                    <>
-                      <svg className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="currentColor"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="currentColor"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="currentColor"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="currentColor"/>
-                      </svg>
-                      <span className="relative">{t.auth.signInWithGoogle}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Card Footer */}
-              <div className="px-6 sm:px-8 py-4 border-t border-white/10 dark:border-base-700/10 bg-white/30 dark:bg-base-900/30 animate-in fade-in duration-700">
-                <p className="text-xs sm:text-sm opacity-50 text-center">
-                  {language === 'de'
-                    ? 'Sichere Anmeldung mit Google. Ihre Daten sind geschützt.'
-                    : 'Secure sign-in with Google. Your data is protected.'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Features - Compact cards */}
-          <div className="lg:hidden space-y-3 mb-6">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-xl bg-white/30 dark:bg-base-800/40 backdrop-blur-sm border border-white/20 dark:border-base-700/30 hover:bg-white/40 dark:hover:bg-base-700/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-700"
-                style={{ animationDelay: `${300 + i * 100}ms` }}
-              >
-                <div className="flex gap-3 items-center">
-                  <span className="text-2xl flex-shrink-0">{feature.icon}</span>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors duration-300 truncate">{feature.title}</h3>
-                    <p className="text-xs opacity-60 group-hover:opacity-80 transition-opacity duration-300 line-clamp-2">{feature.desc}</p>
+            <div className="mt-9 grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: TrendingUp, value: "1 view", label: language === "de" ? "für alle Finanzen" : "for every account" },
+                { icon: Sparkles, value: "24/7", label: language === "de" ? "klarer Rat" : "clear guidance" },
+                { icon: LockKeyhole, value: "Private", label: language === "de" ? "und sicher" : "by design" },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.value} className="rounded-2xl border border-white/[0.075] bg-white/[0.035] p-4">
+                    <Icon className="size-4 text-[#b3ff83]" />
+                    <div className="mt-4 text-[12px] font-medium">{item.value}</div>
+                    <div className="mt-1 text-[9px] text-white/28">{item.label}</div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="w-full max-w-[440px] justify-self-center rounded-[26px] border border-white/[0.09] bg-[#111111] p-5 shadow-[0_35px_100px_rgba(0,0,0,0.45)] sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-[26px] font-medium tracking-[-0.05em]">{language === "de" ? "Willkommen zurück" : "Welcome back"}</h2>
+                <p className="mt-2 text-[11px] leading-5 text-white/35">{language === "de" ? "Melde dich an, um deine Finanzen zu sehen." : "Sign in to continue to your finances."}</p>
               </div>
-            ))}
-          </div>
-
-          {/* Trust badges - Mobile optimized */}
-          <div className="flex justify-center gap-6 text-xs opacity-60 flex-wrap animate-in fade-in duration-700" style={{ animationDelay: '600ms' }}>
-            <div className="flex items-center gap-1 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-default group min-h-[44px]">
-              <span className="text-lg group-hover:animate-bounce">🔒</span>
-              <span className="hidden sm:inline">{language === 'de' ? 'Sicher' : 'Secure'}</span>
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#b3ff83] text-[#030303]"><ArrowUpRight className="size-4" /></span>
             </div>
-            <div className="flex items-center gap-1 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-default group min-h-[44px]">
-              <span className="text-lg group-hover:animate-pulse">⚡</span>
-              <span className="hidden sm:inline">{language === 'de' ? 'Schnell' : 'Fast'}</span>
-            </div>
-            <div className="flex items-center gap-1 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-default group min-h-[44px]">
-              <span className="text-lg group-hover:animate-bounce">🛡️</span>
-              <span className="hidden sm:inline">{language === 'de' ? 'Privat' : 'Private'}</span>
-            </div>
-          </div>
-        </div>
 
-        {/* Desktop Features - Right side */}
-        <div className="hidden lg:flex flex-col justify-center max-w-md">
-          <div className="mb-8">
-            <h1 className="text-5xl font-bold tracking-tight mb-2">
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                SmartBudget
-              </span>
-            </h1>
-            <p className="text-lg opacity-60">
-              {language === 'de' ? 'Intelligente Finanzplanung für Ihre Zukunft' : 'Smart financial planning for your future'}
-            </p>
-          </div>
+            <button
+              onClick={handleGoogle}
+              disabled={isLoading}
+              className="mt-8 flex h-13 w-full items-center justify-center gap-3 rounded-xl bg-white px-4 text-[12px] font-semibold text-[#181819] transition hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 disabled:translate-y-0 disabled:opacity-60"
+            >
+              {isLoading ? (
+                <span className="size-4 animate-spin rounded-full border-2 border-[#181819]/20 border-t-[#181819]" />
+              ) : (
+                <svg className="size-[18px]" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+              )}
+              {isLoading ? (language === "de" ? "Wird angemeldet…" : "Signing you in…") : t.auth.signInWithGoogle}
+            </button>
 
-          <div className="space-y-4">
-            {features.map((feature, i) => (
-              <div
-                key={i}
-                className="p-4 rounded-2xl bg-white/30 dark:bg-base-800/40 backdrop-blur-sm border border-white/20 dark:border-base-700/30 hover:bg-white/40 dark:hover:bg-base-700/50 transition-all duration-300 hover:scale-105 hover:shadow-lg group cursor-pointer"
-              >
-                <div className="flex gap-3 items-start">
-                  <span className="text-3xl">{feature.icon}</span>
-                  <div>
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
-                    <p className="text-xs opacity-60 group-hover:opacity-80 transition-opacity duration-300">{feature.desc}</p>
-                  </div>
+            <div className="my-7 h-px bg-white/[0.075]" />
+            <div className="space-y-3.5">
+              {benefits.map((benefit) => (
+                <div key={benefit} className="flex items-start gap-3 text-[10px] leading-4 text-white/42">
+                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-[#b3ff83]/10 text-[#b3ff83]"><Check className="size-2.5" strokeWidth={3} /></span>
+                  {benefit}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            <div className="mt-7 flex items-center justify-center gap-2 text-[9px] text-white/22">
+              <LockKeyhole className="size-3" />
+              {language === "de" ? "Sichere Anmeldung · Deine Daten bleiben privat" : "Secure sign-in · Your data stays private"}
+            </div>
+          </section>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 via-base-50 to-base-100 dark:from-base-900 dark:via-base-800 dark:to-base-900">
-        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-500">
-          <span className="loading loading-spinner loading-lg text-primary animate-spin"></span>
-          <p className="text-sm opacity-60 animate-pulse">Loading...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center bg-[#030303] text-white"><span className="size-6 animate-spin rounded-full border-2 border-white/15 border-t-[#b3ff83]" /></main>}>
       <SignInContent />
     </Suspense>
   );
