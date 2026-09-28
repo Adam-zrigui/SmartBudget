@@ -198,7 +198,7 @@ export default function ProfileContent() {
   return (
     <PageAnimationWrapper>
     <AppShell tab="profile" txsLength={0} exportCSV={() => {}} taxResult={{}} setTab={handleTabChange}>
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 py-8">
             {/* Profile Header */}
             <div className="mb-8">
               <h1 className="text-4xl font-bold mb-2">
@@ -210,10 +210,10 @@ export default function ProfileContent() {
             </div>
 
             {/* Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 items-start gap-6">
               {/* Left Column - Avatar Card */}
-              <div className="lg:col-span-1">
-                <div className="bg-gradient-to-br from-base-100 to-base-200 rounded-3xl p-8 border border-base-300/50 shadow-lg sticky top-24">
+              <div className="lg:col-span-1 h-fit">
+                <div className="bg-gradient-to-br from-base-100 to-base-200 rounded-3xl p-8 border border-base-300/50 shadow-lg">
                   {/* Avatar */}
                   <div className="flex justify-center mb-6">
                     <div className="relative group">
@@ -288,31 +288,12 @@ export default function ProfileContent() {
                       </svg>
                       {language === 'de' ? 'Transaktionen' : 'Transactions'}
                     </a>
-                    <button 
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                      className="flex items-center justify-center gap-2 w-full btn btn-outline hover:btn-error transition-all disabled:loading"
-                    >
-                      {isSigningOut ? (
-                        <>
-                          <span className="loading loading-spinner loading-sm" />
-                          {language === 'de' ? 'Wird abgemeldet...' : 'Signing out...'}
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
-                          {language === 'de' ? 'Abmelden' : 'Sign Out'}
-                        </>
-                      )}
-                    </button>
                   </div>
                 </div>
               </div>
 
               {/* Right Column - Profile Details */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="lg:col-span-2 flex flex-col gap-6">
                 {/* Profile Information Card */}
                 <div className="bg-gradient-to-br from-base-100 to-base-200 rounded-3xl p-8 border border-base-300/50 shadow-lg">
                   <div className="flex items-center justify-between mb-6">
@@ -510,6 +491,29 @@ export default function ProfileContent() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Sign out - deliberately quiet, pinned to the very bottom */}
+            <div className="mt-8 border-t border-base-300/50 pt-6">
+              <button
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="btn btn-ghost btn-sm gap-2 text-muted-foreground hover:bg-error/10 hover:text-red-400"
+              >
+                {isSigningOut ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs" />
+                    {language === 'de' ? 'Wird abgemeldet...' : 'Signing out...'}
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    {language === 'de' ? 'Abmelden' : 'Sign out'}
+                  </>
+                )}
+              </button>
             </div>
           </div>
 

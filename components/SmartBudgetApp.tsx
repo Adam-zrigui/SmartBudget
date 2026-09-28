@@ -208,6 +208,12 @@ export default function SmartBudgetApp({ initialTab = "dashboard" }: { initialTa
     if (chatOpen) setUnread(0);
   }, [chatOpen]);
 
+  // the FAB is hidden on the advisor tab, so a popover left open there would
+  // float over the full-page copilot with no way to close it
+  useEffect(() => {
+    if (tab === 'advisor') setChatOpen(false);
+  }, [tab]);
+
   const defaultTaxResult = {
     gross: 0,
     lohnsteuer: 0,
@@ -964,7 +970,9 @@ export default function SmartBudgetApp({ initialTab = "dashboard" }: { initialTa
           </main>
 
           {/* floating chat popover using UI popover */}
-          <div className="contents">
+          {/* Hidden on the advisor tab: the full-page copilot is already open there,
+              so the FAB would just sit on top of it. */}
+          <div className={tab === 'advisor' ? 'hidden' : 'contents'}>
             <Popover open={chatOpen} onOpenChange={(v) => setChatOpen(v)}>
               <PopoverTrigger asChild>
                 <button
