@@ -28,8 +28,207 @@ function BrandMark({ className = "size-11" }: { className?: string }) {
  * Right-hand showcase: a lightweight mock of the real dashboard so  *
  * the split reads as "this is what you get", not a stock screenshot *
  * ------------------------------------------------------------------ */
-function ShowcasePanel({ language }: { language: "de" | "en" }) {
+type Lang = "de" | "en";
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
+
+/* ------------------------------------------------------------------ *
+ * Scenes shown inside the app window. Each returns the full body of *
+ * the mock so the window frame never changes size between slides.   *
+ * ------------------------------------------------------------------ */
+
+function SceneOverview({ language }: { language: Lang }) {
   const bars = [38, 52, 44, 66, 58, 74, 62, 84, 71, 90];
+  return (
+    <>
+      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-white/30">
+        {language === "de" ? "Deine Finanzen heute" : "Your finances today"}
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2.5">
+        {[
+          { label: language === "de" ? "Einnahmen" : "Income", value: "1.200", tone: "text-[#b3ff83]", ring: "border-[#b3ff83]/20" },
+          { label: language === "de" ? "Ausgaben" : "Spent", value: "800", tone: "text-white", ring: "border-white/10" },
+          { label: language === "de" ? "Saldo" : "Balance", value: "400", tone: "text-white", ring: "border-white/10" },
+        ].map((m) => (
+          <div key={m.label} className={`rounded-xl border ${m.ring} bg-white/[0.035] p-2.5`}>
+            <div className="truncate text-[7px] font-semibold uppercase tracking-[0.12em] text-white/30">
+              {m.label}
+            </div>
+            <div className={`mt-1.5 text-[15px] font-medium tracking-[-0.04em] ${m.tone}`}>
+              {m.value} <span className="text-[8px] text-white/30">EUR</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
+        <div className="text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
+          {language === "de" ? "Cashflow-Verlauf" : "Cash flow"}
+        </div>
+        <div className="mt-3 flex h-[68px] items-end gap-[5px]">
+          {bars.map((h, i) => (
+            <span
+              key={i}
+              className="sb-bar flex-1 rounded-t-[3px] bg-[#b3ff83]"
+              style={{ height: `${h}%`, opacity: 0.28 + (i / bars.length) * 0.62, animationDelay: `${i * 45}ms` }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-2.5 space-y-1.5">
+        {[
+          { n: language === "de" ? "Monatsgehalt" : "Monthly salary", v: "+1.200,00", up: true },
+          { n: language === "de" ? "Miete" : "Rent", v: "−800,00", up: false },
+        ].map((row) => (
+          <div key={row.n} className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2">
+            <span className={`size-5 shrink-0 rounded-md ${row.up ? "bg-[#b3ff83]/15" : "bg-[#ff8a8a]/12"}`} />
+            <span className="min-w-0 flex-1 truncate text-[9px] text-white/60">{row.n}</span>
+            <span className={`text-[9px] font-medium ${row.up ? "text-[#b3ff83]" : "text-white/45"}`}>{row.v}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function SceneBudget({ language }: { language: Lang }) {
+  const rows = [
+    { n: language === "de" ? "Wohnen" : "Housing", spent: 800, total: 800, tone: "bg-[#ff8a8a]" },
+    { n: language === "de" ? "Lebensmittel" : "Groceries", spent: 214, total: 400, tone: "bg-[#b3ff83]" },
+    { n: language === "de" ? "Mobilität" : "Transport", spent: 96, total: 300, tone: "bg-[#8fb8ff]" },
+  ];
+  return (
+    <>
+      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-white/30">
+        {language === "de" ? "Budget-Planung" : "Budget planning"}
+      </div>
+
+      <div className="mt-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[8px] text-white/35">{language === "de" ? "Ausgaben" : "Spent"}</span>
+          <span className="text-[15px] font-medium tracking-[-0.04em]">
+            1.110 <span className="text-[8px] text-white/30">/ 1.500 EUR</span>
+          </span>
+        </div>
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-white/8">
+          <div className="sb-grow h-full rounded-full bg-[#b3ff83]" style={{ width: "74%" }} />
+        </div>
+      </div>
+
+      <div className="mt-2.5 space-y-1.5">
+        {rows.map((row) => {
+          const pct = Math.min(100, Math.round((row.spent / row.total) * 100));
+          const over = pct >= 100;
+          return (
+            <div key={row.n} className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2">
+              <div className="flex items-center justify-between text-[9px]">
+                <span className="text-white/60">{row.n}</span>
+                <span className={over ? "text-[#ff8a8a]" : "text-white/45"}>
+                  {row.spent} <span className="text-white/25">/ {row.total}</span>
+                </span>
+              </div>
+              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/8">
+                <div
+                  className={`sb-grow h-full rounded-full ${over ? "bg-[#ff8a8a]" : row.tone}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-2.5 flex items-center gap-2.5 rounded-lg border border-[#b3ff83]/15 bg-[#b3ff83]/[0.05] px-2.5 py-2">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-[#b3ff83] text-[#030303]">
+          <Check className="size-2.5" strokeWidth={3} />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[9px] text-white/60">
+          {language === "de" ? "Wohnen ist vollständig gedeckt" : "Housing is fully covered"}
+        </span>
+      </div>
+    </>
+  );
+}
+
+function SceneAdvisor({ language }: { language: Lang }) {
+  const rows = [
+    { q: language === "de" ? "Wofür gibst du am meisten aus?" : "Where do you spend the most?", a: language === "de" ? "Wohnen ist mit 800 € dein größter Brocken — 72 % deiner Ausgaben." : "Housing is your biggest item at €800 — 72% of your spending." },
+    { q: language === "de" ? "Kann ich 150 € sparen?" : "Could I save €150?", a: language === "de" ? "Ja. Nach Wohnen bleiben dir 400 €, davon sind 150 € frei." : "Yes. After housing you have €400 left, €150 of it uncommitted." },
+  ];
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <span className="flex size-5 items-center justify-center rounded-md bg-[#b3ff83] text-[#030303]">
+          <Sparkles className="size-2.5" />
+        </span>
+        <span className="text-[8px] font-semibold uppercase tracking-[0.16em] text-white/30">Copilot</span>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {rows.map((r) => (
+          <div key={r.q}>
+            <div className="ml-auto w-fit max-w-[86%] rounded-lg rounded-br-sm bg-[#b3ff83] px-2.5 py-1.5">
+              <p className="text-[9px] font-medium leading-[1.5] text-[#030303]">{r.q}</p>
+            </div>
+            <div className="mt-1.5 flex items-start gap-1.5">
+              <span className="mt-px flex size-3.5 shrink-0 items-center justify-center rounded-[4px] bg-[#b3ff83]/15">
+                <Sparkles className="size-2 text-[#b3ff83]" />
+              </span>
+              <p className="text-[9px] leading-[1.5] text-white/55">{r.a}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-white/[0.09] bg-white/[0.03] px-2.5 py-2">
+        <span className="min-w-0 flex-1 truncate text-[9px] text-white/28">
+          {language === "de" ? "Frage stellen…" : "Ask anything…"}
+        </span>
+        <span className="flex size-4 shrink-0 items-center justify-center rounded-md bg-[#b3ff83] text-[#030303]">
+          <ArrowUpRight className="size-2.5" />
+        </span>
+      </div>
+    </>
+  );
+}
+
+const SCENES = [
+  { id: "overview", labelDe: "Übersicht", labelEn: "Overview", render: SceneOverview },
+  { id: "budget", labelDe: "Budget", labelEn: "Budget", render: SceneBudget },
+  { id: "advisor", labelDe: "Copilot", labelEn: "Copilot", render: SceneAdvisor },
+];
+
+const SCENE_MS = 4200;
+
+function ShowcasePanel({ language }: { language: Lang }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const reduced = usePrefersReducedMotion();
+
+  const go = useCallback((next: number) => {
+    setIndex(((next % SCENES.length) + SCENES.length) % SCENES.length);
+  }, []);
+
+  useEffect(() => {
+    if (paused || reduced) return;
+    const id = window.setInterval(() => setIndex((i) => (i + 1) % SCENES.length), SCENE_MS);
+    return () => window.clearInterval(id);
+  }, [paused, reduced, index]);
+
+  const active = SCENES[index];
+  const Scene = active.render;
 
   return (
     <section className="relative hidden overflow-hidden bg-[#08080a] lg:block">
@@ -47,7 +246,7 @@ function ShowcasePanel({ language }: { language: "de" | "en" }) {
         </div>
 
         {/* the app window */}
-        <div className="my-16 w-full max-w-[520px] overflow-hidden rounded-[22px] border border-white/[0.09] bg-[#0d0d0f]/90 shadow-[0_50px_120px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
+        <div className="my-14 w-full max-w-[520px] overflow-hidden rounded-[22px] border border-white/[0.09] bg-[#0d0d0f]/90 shadow-[0_50px_120px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
           {/* title bar */}
           <div className="flex items-center gap-2 border-b border-white/[0.07] px-4 py-3">
             <span className="size-2 rounded-full bg-white/15" />
@@ -60,84 +259,76 @@ function ShowcasePanel({ language }: { language: "de" | "en" }) {
           </div>
 
           <div className="flex">
-            {/* mini rail */}
+            {/* mini rail - first three tiles track the active scene */}
             <aside className="hidden w-12 shrink-0 flex-col gap-2 border-r border-white/[0.06] p-3 sm:flex">
-              {["bg-[#b3ff83]", "bg-white/20", "bg-white/20", "bg-white/20", "bg-white/20", "bg-white/20"].map(
-                (tone, i) => (
-                  <span key={i} className={`h-6 rounded-lg ${tone}`} />
-                )
-              )}
+              {SCENES.map((scene, i) => (
+                <span
+                  key={scene.id}
+                  className={`h-6 rounded-lg transition-all duration-500 ${
+                    i === index ? "bg-[#b3ff83]" : "bg-white/20"
+                  }`}
+                />
+              ))}
+              {["bg-white/20", "bg-white/20", "bg-white/20"].map((tone, i) => (
+                <span key={i} className={`h-6 rounded-lg ${tone}`} />
+              ))}
             </aside>
 
-            <div className="min-w-0 flex-1 p-4">
-              <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-white/30">
-                {language === "de" ? "Deine Finanzen heute" : "Your finances today"}
-              </div>
-
-              {/* metric row */}
-              <div className="mt-3 grid grid-cols-3 gap-2.5">
-                {[
-                  { label: language === "de" ? "Einnahmen" : "Income", value: "1.200", tone: "text-[#b3ff83]", ring: "border-[#b3ff83]/20" },
-                  { label: language === "de" ? "Ausgaben" : "Spent", value: "800", tone: "text-white", ring: "border-white/10" },
-                  { label: language === "de" ? "Saldo" : "Balance", value: "400", tone: "text-white", ring: "border-white/10" },
-                ].map((m) => (
-                  <div key={m.label} className={`rounded-xl border ${m.ring} bg-white/[0.035] p-2.5`}>
-                    <div className="truncate text-[7px] font-semibold uppercase tracking-[0.12em] text-white/30">
-                      {m.label}
-                    </div>
-                    <div className={`mt-1.5 text-[15px] font-medium tracking-[-0.04em] ${m.tone}`}>
-                      {m.value} <span className="text-[8px] text-white/30">EUR</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* chart */}
-              <div className="mt-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
-                <div className="text-[8px] font-semibold uppercase tracking-[0.14em] text-white/28">
-                  {language === "de" ? "Cashflow-Verlauf" : "Cash flow"}
-                </div>
-                <div className="mt-3 flex h-24 items-end gap-[5px]">
-                  {bars.map((h, i) => (
-                    <span
-                      key={i}
-                      className="flex-1 rounded-t-[3px] bg-[#b3ff83]"
-                      style={{ height: `${h}%`, opacity: 0.28 + (i / bars.length) * 0.62 }}
-                    />
-                  ))}
+            {/* scene viewport - fixed height so the window never resizes */}
+            <div
+              className="relative min-w-0 flex-1 p-4"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              {/* fixed height = tallest scene, so the window never resizes between slides */}
+              <div className="relative h-[312px]">
+                <div
+                  key={active.id}
+                  className="sb-scene absolute inset-0"
+                  style={reduced ? undefined : { animationDelay: "0ms" }}
+                >
+                  <Scene language={language} />
                 </div>
               </div>
 
-              {/* list */}
-              <div className="mt-2.5 space-y-1.5">
-                {[
-                  { n: language === "de" ? "Monatsgehalt" : "Monthly salary", v: "+1.200,00", up: true },
-                  { n: language === "de" ? "Miete" : "Rent", v: "−800,00", up: false },
-                ].map((row) => (
-                  <div
-                    key={row.n}
-                    className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2"
-                  >
-                    <span
-                      className={`size-5 shrink-0 rounded-md ${
-                        row.up ? "bg-[#b3ff83]/15 text-[#b3ff83]" : "bg-[#ff8a8a]/12 text-[#ff8a8a]"
-                      }`}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[9px] text-white/60">{row.n}</span>
-                    <span
-                      className={`text-[9px] font-medium ${row.up ? "text-[#b3ff83]" : "text-white/45"}`}
+              {/* scene switcher */}
+              <div className="mt-3 flex items-center gap-1.5" role="tablist" aria-label={language === "de" ? "Ansichten" : "Views"}>
+                {SCENES.map((scene, i) => {
+                  const on = i === index;
+                  return (
+                    <button
+                      key={scene.id}
+                      role="tab"
+                      aria-selected={on}
+                      onClick={() => go(i)}
+                      className="group flex items-center gap-1.5"
                     >
-                      {row.v}
-                    </span>
-                  </div>
-                ))}
+                      <span className="relative block h-[3px] overflow-hidden rounded-full bg-white/12" style={{ width: on ? 26 : 12, transition: "width 320ms cubic-bezier(.4,0,.2,1)" }}>
+                        {on && !reduced && (
+                          <span
+                            className="sb-progress absolute inset-y-0 left-0 rounded-full bg-[#b3ff83]"
+                            style={{ animationDuration: `${SCENE_MS}ms` }}
+                          />
+                        )}
+                        {on && reduced && <span className="absolute inset-0 rounded-full bg-[#b3ff83]" />}
+                      </span>
+                      <span
+                        className={`text-[8px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                          on ? "text-white/55" : "text-white/22 group-hover:text-white/40"
+                        }`}
+                      >
+                        {language === "de" ? scene.labelDe : scene.labelEn}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
 
         {/* floating balance card, bottom left */}
-        <div className="absolute bottom-20 left-6 w-[228px] rounded-2xl border border-white/[0.1] bg-[#111113]/95 p-4 shadow-[0_34px_80px_rgba(0,0,0,0.62)] backdrop-blur-xl xl:bottom-24 xl:left-10">
+        <div className="absolute bottom-8 left-6 w-[228px] rounded-2xl border border-white/[0.1] bg-[#111113]/95 p-4 shadow-[0_34px_80px_rgba(0,0,0,0.62)] backdrop-blur-xl xl:bottom-12 xl:left-10">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/40">
               {language === "de" ? "Saldo" : "Balance"}
